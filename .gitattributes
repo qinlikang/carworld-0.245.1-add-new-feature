@@ -1,0 +1,6 @@
+# specify binary file for this project
+
+data/*.* binary
+data/*/*.* binary
+data/*/*/*.* binary
+
