@@ -165,3 +165,5 @@ pip-log.txt
 
 log.txt
 */log.txt
+stderr.txt
+stdout.txt
