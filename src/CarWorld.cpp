@@ -156,6 +156,11 @@ void CarWorld::DrawOnScreen()
 	Hgl::SetColor(White);
 	Hgl::WriteText(FPSCaption.str().c_str(), Point2D(-.25,.75)); //write fps and speed*/
 
+	char GlobalPosition[30]={0};
+	const Point3D& Pos=m_Camera->GetRef().GetAbsCoord(Point3D(0,0,0));
+	sprintf(GlobalPosition,"%5.2f %5.2f %5.2f",Pos.x(),Pos.y(),Pos.z());
+	Hgl::WriteText(GlobalPosition, Point2D(.30,.75)); //write global position
+
 	//draw car info
 	Hgl::Translate(Point3D(.75,-.75,0));
 	Hgl::Scale(0.2f);
