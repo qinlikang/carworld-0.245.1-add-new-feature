@@ -151,6 +151,15 @@ public:
 	Point2D GetCenter() const;
 };
 
+//! reference of object pos information
+/*!
+	control the objects position, orientation in the world coordinate system.
+	a dynamic model, can move and rotate.
+
+	The Z means Upward direction.
+	The X means Right direction.
+	The Y means Forward direction.
+*/
 class Ref
 {
 public:
@@ -163,14 +172,14 @@ public:
 	Ref();
 	Ref(const Point3D &APosition, const Point3D &AY, const Point3D &AZ);
 	void reset();
-	Point3D GetAbsCoord(const Point3D &RelPos) const;
+	Point3D GetAbsCoord(const Point3D &RelPos) const;///< give the coordinates in this ref, return the absolute coordinates in the world ref
 	Ref GetRef(const Point3D &RelPos) const;
 	Ref GetRef(const Ref &ARef) const;
 	void Straighten();
 	void Move(const Point3D &point);
 	void Rotate(const Point3D &Axe);
-	Point3D GetDirection() const;
-	Point3D GetUp() const;
+	Point3D GetDirection() const; ///< ForwordDirection
+	Point3D GetUp() const; 
 	Point3D GetW() const;
 	Point3D GetX() const;
 	Point3D GetY() const;
@@ -190,6 +199,10 @@ public:
 	Point3D Value;
 };
 
+//! an improved ref
+/*!
+	add features to handle force interaction
+*/
 class InertRef : public Ref
 {
 private:
@@ -204,6 +217,10 @@ public:
 	void TimeClick();
 };
 
+//! contact with an object
+/*!
+	record the contact with an object : position, normal(of the position), surfaceType
+*/
 class Contact
 {
 public:

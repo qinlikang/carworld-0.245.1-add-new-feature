@@ -55,7 +55,7 @@ public:
 
 	Point3D RelPos;
 	REAL SpringStiffness;
-	REAL MaxTravel;
+	REAL MaxTravel; ///< do not understand this one, a negative float use to generate Ray's Pos
 	REAL MaxLoad; //load beyond which the tyre is no longer efficient
 	REAL WheelRadius;
 	REAL DamperCompression;
