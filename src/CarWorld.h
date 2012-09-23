@@ -5,6 +5,7 @@
 #include "H_Standard.h"
 #include "CarWorldClasses.h"
 #include "CWCamera.h"
+#include "CWRecorder.h"
 
 //#define DEFAULT_VEHICLE "data/Vehicles/82porsch.vhc"
 #define DEFAULT_VEHICLE "data/Vehicles/truck.vhc"
@@ -24,6 +25,9 @@ public:
 	void add(CWFeature* AFeature);
 	void add(CWVehicle* AVehicle);
 	void next_camera();
+	void recording();
+	void replaying();
+	void off_recorder();
 	void DrawOnScreen();
 
 	void reset();
@@ -34,6 +38,7 @@ public:
 public:
 	CWLandscape *m_Landscape;
 	CWCamera *m_Camera; //the current camera
+	CWRecorder *m_Recorder; // the current main recorder
 private:
 	CWBackground *m_Background;
 

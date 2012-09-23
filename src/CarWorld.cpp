@@ -10,6 +10,7 @@
 CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
 						m_Landscape(new CWLandscape(LandscapeFile)),
 						m_Camera(new FixCam()),
+						m_Recorder(NULL),
 						m_Background(new CWBackground()),
 						RealTime(0),
 						Frames(0),
@@ -48,6 +49,7 @@ void CarWorld::add(CWVehicle* AVehicle)
 {
 	add((CWFeature*)AVehicle);
 	add(m_Camera = new InCarCam(AVehicle));
+	add(m_Recorder = new VehicleStateRecorder(AVehicle));
 	add(new FixCam(AVehicle));
 	add(new FollowCam(AVehicle));
 	add(new SateliteCam(AVehicle));
@@ -102,8 +104,9 @@ void CarWorld::update(int ElapsedTimeMs)
 
 	for (int i=0 ; i<NbTimeClicksPerFrame ; i++)
 	{
+		if(m_Recorder!=NULL&&m_Recorder->is_replay_and_finished()) return;
 		for (list<CWFeature*>::iterator I=m_Features.begin() ; I!=m_Features.end() ; I++)
-			(*I)->update();
+			(*I)->update();	
 	}
 }
 
@@ -156,15 +159,11 @@ void CarWorld::DrawOnScreen()
 	Hgl::SetColor(White);
 	Hgl::WriteText(FPSCaption.str().c_str(), Point2D(-.25,.75)); //write fps and speed*/
 
-	char GlobalPosition[30]={0};
-	const Point3D& Pos=m_Camera->GetRef().GetAbsCoord(Point3D(0,0,0));
-	sprintf(GlobalPosition,"%5.2f %5.2f %5.2f",Pos.x(),Pos.y(),Pos.z());
-	Hgl::WriteText(GlobalPosition, Point2D(.30,.75)); //write global position
-
 	//draw car info
-	Hgl::Translate(Point3D(.75,-.75,0));
-	Hgl::Scale(0.2f);
 	m_Camera->DrawOnScreen();
+	//draw recorder info
+	if(m_Recorder!=NULL)
+		m_Recorder->draw_on_screen();
 
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
@@ -173,5 +172,20 @@ void CarWorld::DrawOnScreen()
 
     glEnable(GL_DEPTH_TEST);
 	glEnable(GL_LIGHTING);
+}
+
+void CarWorld::recording()
+{
+	m_Recorder->set_state(CWRecorder::ERS_Recording);
+}
+
+void CarWorld::replaying()
+{
+	m_Recorder->set_state(CWRecorder::ERS_Replaying);
+}
+
+void CarWorld::off_recorder()
+{
+	m_Recorder->set_state(CWRecorder::ERS_OFF);
 }
 

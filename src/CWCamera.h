@@ -10,6 +10,7 @@
 class CWCamera : public CWFeature
 {
 public:
+	typedef CWCamera CameraBase;
 	virtual ~CWCamera();
 	virtual Ref GetRef() = 0;
 	virtual void DrawOnScreen();

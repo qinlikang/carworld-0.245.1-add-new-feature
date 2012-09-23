@@ -15,6 +15,6 @@
 
 #define CW_PRODUCT_NAME "Car World"
 #define CW_AUTHOR "Marcus Hewat"
-#define CW_COPYRIGHT "Copyright © 2010 " CW_AUTHOR
+#define CW_COPYRIGHT "Copyright ?2010 " CW_AUTHOR
 
 #endif //_VERSION_H_

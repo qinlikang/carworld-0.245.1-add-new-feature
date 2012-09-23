@@ -144,6 +144,9 @@ void CarWorldClient::draw_init()
 	m_Executables["bind"] = new BindKey(this);
 	m_Executables["reset"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::reset);
 	m_Executables["next_camera"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::next_camera);
+	m_Executables["recording"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::recording);
+	m_Executables["replaying"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::replaying);
+	m_Executables["off_recorder"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::off_recorder);
 	m_Executables["toggleconsole"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::toggleconsole);
 	m_Executables["help"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::print_help);
 	m_Executables["version"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::print_version);
@@ -155,6 +158,10 @@ void CarWorldClient::draw_init()
 	bind(SDLK_F3, "reset");
 	bind(SDLK_F4, "set use_joystick 1");
 	bind(SDLK_F5, "set use_joystick 0");
+
+	bind(SDLK_F6, "recording");
+	bind(SDLK_F7, "replaying");
+	bind(SDLK_F8, "off_recorder");
 
 	execute_cfg(ConfigurationFileName());
 }
