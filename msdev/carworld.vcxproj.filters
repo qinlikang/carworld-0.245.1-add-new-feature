@@ -82,10 +82,10 @@
     <ClCompile Include="..\src\Tacho.cpp">
       <Filter>CarWorld specific</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\WorldBlock.cpp">
+    <ClCompile Include="..\src\CWRecorder.cpp">
       <Filter>CarWorld specific</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\CWRecorder.cpp">
+    <ClCompile Include="..\src\WorldBlock.cpp">
       <Filter>CarWorld specific</Filter>
     </ClCompile>
   </ItemGroup>
@@ -159,10 +159,10 @@
     <ClInclude Include="..\src\Tacho.h">
       <Filter>CarWorld specific</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\WorldBlock.h">
+    <ClInclude Include="..\src\CWRecorder.h">
       <Filter>CarWorld specific</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\CWRecorder.h">
+    <ClInclude Include="..\src\WorldBlock.h">
       <Filter>CarWorld specific</Filter>
     </ClInclude>
   </ItemGroup>
