@@ -4,8 +4,10 @@ using namespace boost;
 void printHelp()
 {
 	cout<<"usage: \n\tTransformWorldBlock [landscapefile] [dstfile]"<<endl;
-	cout<<"synopsis: \n\t Transformed [landscapefile] into a whole 3d OFF file [dstfile]"<<endl;
-	cout<<"notice: \n\tThe file name should not contain spaces"<<endl;
+	cout<<"synopsis: \n\tTransformed [landscapefile] into a whole 3d OFF file [dstfile]"<<endl;
+	cout<<"notice!!!!: \n\tthe [landscapefile] should contain path, like './landscape.txt' but not 'landscape.txt'"<<endl;
+	cout<<" \tThe file name should not contain spaces"<<endl;
+	cout<<"SAMPLE: \n\tTransformWorldBlock ./landscape.txt wholeland.off"<<endl;
 
 }
 

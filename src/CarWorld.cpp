@@ -21,6 +21,7 @@ CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
 						draw_background(true),
 						LightDirection(-.6f,-.4f,1.f)
 {
+	m_fogon=false;
 	add(m_Landscape);
 	add(m_Camera);
 	add(m_Background);
@@ -110,6 +111,10 @@ void CarWorld::update(int ElapsedTimeMs)
 	}
 }
 
+// XX add fog test
+void CarWorld::fog_up(){ m_fogon= !m_fogon;};
+void CarWorld::fog_down(){ int i=0;};
+
 void CarWorld::draw()
 {
 	//cout << "clearing screen...\n";
@@ -117,6 +122,17 @@ void CarWorld::draw()
 	if (Hgl::GetShadows()>0)
 		ToBeCleared |= GL_STENCIL_BUFFER_BIT;
 	glClear(ToBeCleared);
+
+	// XX add fog
+	if (m_fogon){
+	glEnable(GL_FOG);
+	float FogCol[3]={0.8f,0.8f,0.8f}; // Define a nice light grey
+    glFogfv(GL_FOG_COLOR,FogCol);     // Set the fog color
+	glFogi(GL_FOG_MODE, GL_LINEAR); // Note the 'i' after glFog - the GL_LINEAR constant is an integer.
+    glFogf(GL_FOG_START, 5.f);
+    glFogf(GL_FOG_END, 20.f);
+	}
+	//else glEnable(GL_FOG);
 
 	//cout << "looking from the camera...\n";
 	glLoadIdentity();
