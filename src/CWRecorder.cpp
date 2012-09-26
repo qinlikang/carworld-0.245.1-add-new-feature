@@ -103,7 +103,7 @@ void VehicleStateRecorder::draw_on_screen()
 
 	boost::format fmt("Records Num: %d");
 	fmt%m_Records.size();
-	Hgl::WriteText(fmt.str().c_str(), Point2D(-.50f,-.85f)); //write global position
+	Hgl::WriteText(fmt.str().c_str(), Point2D(-.50f,-.85f)); // write the recorder state
 
 	glPopMatrix();
 }
