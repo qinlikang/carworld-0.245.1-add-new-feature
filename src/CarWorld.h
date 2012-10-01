@@ -35,6 +35,11 @@ public:
 	void draw_init();
 	void draw();
 
+	// XX add fog test
+	void fog_up();
+	void fog_down();
+	bool m_fogon;
+
 public:
 	CWLandscape *m_Landscape;
 	CWCamera *m_Camera; //the current camera

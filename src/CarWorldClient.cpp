@@ -152,6 +152,9 @@ void CarWorldClient::draw_init()
 	m_Executables["version"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::print_version);
 	m_Executables["exec"] = new ExecCFG(this);
 	m_Executables["dump"] = new MethodCall<OFFObject>(&m_Vehicle->Model,&OFFObject::debug_dump);
+	// XX addfog
+	m_Executables["fogUp"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_up);
+	m_Executables["fogDown"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_down);
 
 	bind(SDLK_TAB,"toggleconsole");
 	bind(SDLK_F2, "next_camera");
@@ -162,6 +165,9 @@ void CarWorldClient::draw_init()
 	bind(SDLK_F6, "recording");
 	bind(SDLK_F7, "replaying");
 	bind(SDLK_F8, "off_recorder");
+	// XX addfog
+	bind(SDLK_1, "fogUp");
+	bind(SDLK_2, "fogDown");
 
 	execute_cfg(ConfigurationFileName());
 }
