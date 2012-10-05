@@ -9,6 +9,7 @@
 #include <boost/smart_ptr.hpp>
 #include <vector>
 #include <string>
+#include <iostream>
 
 //! Base class of record item
 /*!
@@ -20,6 +21,7 @@ class CWRecordItem
 public:
 	CWRecordItem(){}
 	virtual ~CWRecordItem(){}
+	virtual void write_to_os(std::ostream& os){}
 };
 typedef boost::shared_ptr<CWRecordItem> CWRecordItemPtr;
 
@@ -32,6 +34,7 @@ public:
 		m_State=pVehicle->GetState();
 	}
 	CWVehicleState m_State;
+	virtual void write_to_os(std::ostream& os);
 };
 
 //! Base class of recorder
@@ -66,13 +69,17 @@ public:
 	// must implement these
 	virtual void record(){};
 	virtual void replay(){};
-	virtual void dump(){};
+	virtual std::string dump(){return "";}// return the filename
 	virtual void restore(){};
-
+	virtual const char* name(){ return "CWRecorder";};
 
 	void set_state(RecorderState state){m_RecorderState=state;reset();}
 	RecorderState get_state()const{return m_RecorderState;}
 	bool is_replay_and_finished()const{return m_RecorderState==ERS_Replaying&&m_Cursor==m_Records.end();}
+public:
+	static const string RecordPath;
+
+	string m_strOtherMsg;// other msg about recorder that will print onto screen
 protected:
 	RecorderState m_RecorderState;
 	std::vector<CWRecordItemPtr> m_Records;
@@ -88,8 +95,9 @@ public:
 
 	virtual void record();
 	virtual void replay();
-	virtual void dump();
+	virtual std::string dump();
 	virtual void restore();
+	virtual const char* name(){return "VehicleStateRecorder";}
 
 	virtual void draw_on_screen();
 private:

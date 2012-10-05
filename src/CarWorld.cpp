@@ -132,7 +132,7 @@ void CarWorld::draw()
     glFogf(GL_FOG_START, 5.f);
     glFogf(GL_FOG_END, 20.f);
 	}
-	//else glEnable(GL_FOG);
+	else glDisable(GL_FOG);
 
 	//cout << "looking from the camera...\n";
 	glLoadIdentity();
@@ -202,6 +202,7 @@ void CarWorld::replaying()
 
 void CarWorld::off_recorder()
 {
+	m_Recorder->m_strOtherMsg= "FileSaved In: "+m_Recorder->dump();
 	m_Recorder->set_state(CWRecorder::ERS_OFF);
 }
 
