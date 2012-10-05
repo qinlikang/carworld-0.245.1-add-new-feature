@@ -11,7 +11,7 @@ const string CWRecorder::RecordPath="./Records/";
 CWRecorder::CWRecorder(RecorderState state)
 	:m_RecorderState(state)
 {
-	m_Cursor=m_Records.begin();
+	reset();
 	if(m_RecorderState==ERS_Replaying)
 		restore(); // restore the records from replay file
 }
@@ -46,6 +46,7 @@ void CWRecorder::reset()
 	{
 		m_Records.clear();
 	}
+	m_startTime=clock();
 }
 
 void CWRecorder::draw_on_screen()
@@ -95,7 +96,15 @@ VehicleStateRecorder::VehicleStateRecorder( CWVehicle* pVehicle/*=NULL*/,Recorde
 void VehicleStateRecorder::record()
 {
 	if(!m_Vehicle) return;
-	m_Records.push_back(CWRecordItemPtr(new CWRecordItem_VehicleState(m_Vehicle)));
+	if(m_Records.empty())
+	{
+		reset();
+	}
+
+	clock_t now_time=clock();
+	double elapse_time = double(now_time-m_startTime)/CLOCKS_PER_SEC;
+
+	m_Records.push_back(CWRecordItemPtr(new CWRecordItem_VehicleState(m_Vehicle,elapse_time)));
 	m_Cursor=m_Records.end();
 }
 
@@ -189,5 +198,6 @@ void VehicleStateRecorder::draw_on_screen()
 
 void CWRecordItem_VehicleState::write_to_os( std::ostream& os )
 {
+	RecorderItemBase::write_to_os(os);
 	os<<m_State.m_Ref.Position<<endl;
 }

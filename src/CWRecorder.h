@@ -10,6 +10,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <ctime>
 
 //! Base class of record item
 /*!
@@ -19,9 +20,12 @@
 class CWRecordItem
 {
 public:
-	CWRecordItem(){}
+	CWRecordItem(double time_elapse):m_TimeElapse(time_elapse){}
 	virtual ~CWRecordItem(){}
-	virtual void write_to_os(std::ostream& os){}
+	virtual void write_to_os(std::ostream& os){os<<m_TimeElapse<<endl;}
+
+	double m_TimeElapse; // milliseconds passed by since start to record
+	typedef CWRecordItem RecorderItemBase;
 };
 typedef boost::shared_ptr<CWRecordItem> CWRecordItemPtr;
 
@@ -29,7 +33,8 @@ typedef boost::shared_ptr<CWRecordItem> CWRecordItemPtr;
 class CWRecordItem_VehicleState: public CWRecordItem
 {
 public:
-	CWRecordItem_VehicleState(CWVehicle* pVehicle)
+	CWRecordItem_VehicleState(CWVehicle* pVehicle,double time_elapse)
+		: CWRecordItem(time_elapse)
 	{
 		m_State=pVehicle->GetState();
 	}
@@ -78,7 +83,7 @@ public:
 	bool is_replay_and_finished()const{return m_RecorderState==ERS_Replaying&&m_Cursor==m_Records.end();}
 public:
 	static const string RecordPath;
-
+	std::clock_t m_startTime;
 	string m_strOtherMsg;// other msg about recorder that will print onto screen
 protected:
 	RecorderState m_RecorderState;
