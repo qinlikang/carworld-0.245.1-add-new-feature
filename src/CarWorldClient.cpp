@@ -343,10 +343,12 @@ void CarWorldClient::key_down(SDLKey AHKey, char c)
 	{
 		string ReturnedCommand(hbuf.HitKey(AHKey,c));
 		if (!ReturnedCommand.empty())
-			pars_command(ReturnedCommand.c_str());
+			pars_command(ReturnedCommand.c_str());	
 	}
 	map<SDLKey,string>::iterator I = KeyBindings.find(AHKey);
-	if (I != KeyBindings.end())
+	if (I != KeyBindings.end()&&!IsPromptMode)// LX: to disable further process of keydown msg when using console.
+		pars_command((*I).second.c_str());
+	else if(IsPromptMode&&I->second=="toggleconsole")// LX: enable toggleconsole msg
 		pars_command((*I).second.c_str());
 	//else
 	//	cout << "\"" << KeyMap.find(AHKey) << "\" key unbound\n";
@@ -427,8 +429,11 @@ void CarWorldClient::on_idle(unsigned int elapsed_time)
 				time_since_send = 0;
 			}
 		}
-		UpdateCommand(&m_Vehicle->MyCommand, CurrentJoystick);
-		m_CarWorld->update(elapsed_time);
+		if(!IsPromptMode)
+		{
+			UpdateCommand(&m_Vehicle->MyCommand, CurrentJoystick);
+			m_CarWorld->update(elapsed_time);
+		}// LX: to disable further process of keydown msg when using console.
 		draw();
 	}
 }
