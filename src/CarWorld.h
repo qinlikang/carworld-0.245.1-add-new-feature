@@ -25,8 +25,9 @@ public:
 	void add(CWFeature* AFeature);
 	void add(CWVehicle* AVehicle);
 	void next_camera();
-	void recording();
-	void replaying();
+	void record();
+	void replay();
+	void pause_recorder_timer(bool pause=true);
 	void off_recorder();
 	void DrawOnScreen();
 

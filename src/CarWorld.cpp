@@ -190,19 +190,27 @@ void CarWorld::DrawOnScreen()
 	glEnable(GL_LIGHTING);
 }
 
-void CarWorld::recording()
+void CarWorld::record()
 {
-	m_Recorder->set_state(CWRecorder::ERS_Recording);
+	m_Recorder->set_state(CWRecorder::ERS_Record);
 }
 
-void CarWorld::replaying()
+void CarWorld::replay()
 {
-	m_Recorder->set_state(CWRecorder::ERS_Replaying);
+	m_Recorder->set_state(CWRecorder::ERS_Replay);
 }
 
 void CarWorld::off_recorder()
 {
 	m_Recorder->m_strOtherMsg= "FileSaved In: "+m_Recorder->dump();
 	m_Recorder->set_state(CWRecorder::ERS_OFF);
+}
+
+void CarWorld::pause_recorder_timer( bool pause/*=true*/ )
+{
+	if(pause)
+		m_Recorder->m_Timer.pause();
+	else
+		m_Recorder->m_Timer.resume();
 }
 

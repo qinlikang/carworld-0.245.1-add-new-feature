@@ -12,24 +12,24 @@ CWRecorder::CWRecorder(RecorderState state)
 	:m_RecorderState(state)
 {
 	reset();
-	if(m_RecorderState==ERS_Replaying)
+	if(m_RecorderState==ERS_Replay)
 		restore(); // restore the records from replay file
 }
 
 
 CWRecorder::~CWRecorder(void)
 {
-	if(m_RecorderState==ERS_Recording)
+	if(m_RecorderState==ERS_Record)
 		dump(); // dump the records
 }
 
 void CWRecorder::update()
 {
-	if(m_RecorderState==ERS_Replaying)
+	if(m_RecorderState==ERS_Replay)
 	{
 		replay();
 	}
-	else if(m_RecorderState==ERS_Recording)
+	else if(m_RecorderState==ERS_Record)
 	{
 		record();
 	}
@@ -42,11 +42,11 @@ void CWRecorder::update()
 void CWRecorder::reset()
 {
 	m_Cursor=m_Records.begin();
-	if(m_RecorderState==ERS_Recording)
+	if(m_RecorderState==ERS_Record)
 	{
 		m_Records.clear();
 	}
-	m_startTime=clock();
+	m_Timer.start();
 }
 
 void CWRecorder::draw_on_screen()
@@ -56,10 +56,10 @@ void CWRecorder::draw_on_screen()
 	string recorder_state("RECODER: ");
 	switch (m_RecorderState)
 	{
-	case ERS_Recording:
+	case ERS_Record:
 		recorder_state+="recording..";
 		break;
-	case ERS_Replaying:
+	case ERS_Replay:
 		recorder_state+="replaying..";
 		break;
 	case ERS_OFF:
@@ -101,8 +101,7 @@ void VehicleStateRecorder::record()
 		reset();
 	}
 
-	clock_t now_time=clock();
-	double elapse_time = double(now_time-m_startTime)/CLOCKS_PER_SEC;
+	double elapse_time = double(m_Timer.get_elapse_clocks())/CLOCKS_PER_SEC;
 
 	m_Records.push_back(CWRecordItemPtr(new CWRecordItem_VehicleState(m_Vehicle,elapse_time)));
 	m_Cursor=m_Records.end();
