@@ -349,7 +349,7 @@ void CarWorldClient::key_down(SDLKey AHKey, char c)
 	map<SDLKey,string>::iterator I = KeyBindings.find(AHKey);
 	if (I != KeyBindings.end()&&!IsPromptMode)// LX: to disable further process of keydown msg when using console.
 		pars_command((*I).second.c_str());
-	else if(IsPromptMode&&I->second=="toggleconsole")// LX: enable toggleconsole msg
+	else if(I != KeyBindings.end()&&IsPromptMode&&I->second=="toggleconsole")// LX: enable toggleconsole msg
 		pars_command((*I).second.c_str());
 	//else
 	//	cout << "\"" << KeyMap.find(AHKey) << "\" key unbound\n";
