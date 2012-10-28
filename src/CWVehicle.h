@@ -94,6 +94,8 @@ public:
 	void load(const char *name);
 	virtual ~CWVehicle();
 	void reset();
+	void reset_to_fall_block();
+	bool is_vehicle_out_of_road();
 	void update();
 	REAL GetSpeed() const; //returns speed in kph
 
@@ -131,6 +133,9 @@ public:
 	InertRef MyRef;
 	vector<Wheel> Wheels;
 	OFFObject Model;
+
+	WorldBlock* LastHitBlock;
+	WorldBlock::MyTriangle LastHitTriangle;
 };
 
 #endif //__CW_VEHICLE_H_
