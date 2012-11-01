@@ -3,7 +3,7 @@
 #define __CW_VEHICLE_H_
 
 #include "CarWorldClasses.h"
-
+#include "CWBeeper.h"
 
 class CWVehicle;
 
@@ -111,6 +111,8 @@ public:
 
 	CWVehicleState GetState();
 	void SetState(CWVehicleState &state);
+
+	bool Beep(unsigned int index);
 public:
 //read in the configuration file
 	string ModelFile;
@@ -133,6 +135,8 @@ public:
 	InertRef MyRef;
 	vector<Wheel> Wheels;
 	OFFObject Model;
+	vector<string> BeeperFiles;
+	vector<CWBeeper> Beepers;
 
 	WorldBlock* LastHitBlock;
 	WorldBlock::MyTriangle LastHitTriangle;

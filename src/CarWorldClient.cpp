@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include "H_Variable.h"
+#include <boost/bind.hpp>
 
 #define CLIENT_TIMEOUT 200
 
@@ -156,6 +157,9 @@ void CarWorldClient::draw_init()
 	m_Executables["fogUp"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_up);
 	m_Executables["fogDown"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_down);
 
+	m_Executables["beep1"] = new BoostBindCall(	boost::bind(&CWVehicle::Beep,m_Vehicle,0));
+	m_Executables["beep2"] = new BoostBindCall(	boost::bind(&CWVehicle::Beep,m_Vehicle,1));
+
 	bind(SDLK_TAB,"toggleconsole");
 	bind(SDLK_F2, "next_camera");
 	bind(SDLK_F3, "reset");
@@ -166,8 +170,11 @@ void CarWorldClient::draw_init()
 	bind(SDLK_F7, "replay");
 	bind(SDLK_F8, "off_recorder");
 	// XX addfog
-	bind(SDLK_1, "fogUp");
-	bind(SDLK_2, "fogDown");
+	bind(SDLK_F9, "fogUp");
+	bind(SDLK_F10, "fogDown");
+
+	bind(SDLK_1,"beep1");
+	bind(SDLK_2,"beep2");
 
 	execute_cfg(ConfigurationFileName());
 }

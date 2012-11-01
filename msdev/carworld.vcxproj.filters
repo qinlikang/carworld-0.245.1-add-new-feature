@@ -88,6 +88,12 @@
     <ClCompile Include="..\src\WorldBlock.cpp">
       <Filter>CarWorld specific</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\CWBeeper.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CWMixerManager.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\DXJoystick.h">
@@ -163,6 +169,15 @@
       <Filter>CarWorld specific</Filter>
     </ClInclude>
     <ClInclude Include="..\src\WorldBlock.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\H_Singleton.h">
+      <Filter>Generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CWBeeper.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CWMixerManager.h">
       <Filter>CarWorld specific</Filter>
     </ClInclude>
   </ItemGroup>

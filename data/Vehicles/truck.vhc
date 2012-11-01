@@ -81,4 +81,10 @@
 		SteerFactor="0"
 		LockUp="1">
 	</CWWheel>
+	<CWBeeper
+		SoundFile="data/Sounds/Beeper1.wav">
+	</CWBeeper>
+	<CWBeeper
+		SoundFile="data/Sounds/Beeper2.wav">
+	</CWBeeper>
 </CWVehicle>

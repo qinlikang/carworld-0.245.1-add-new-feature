@@ -220,6 +220,11 @@ void CWVehicle::load(const char *name)
 	DescribeWheel["SteerFactor"] =			new HVar<REAL>("SteerFactor",&(W.SteerFactor));
 	DescribeWheel["LockUp"] =				new HVar<bool>("LockUp",&(W.LockUp));
 
+	string B;
+	map<string,HVariable*> DescribeBeeper;
+	DescribeBeeper["SoundFile"] =			new HVar<string>("SoundFile",&B);
+
+
 	XmlTag tag;
 	do
 	{
@@ -240,6 +245,12 @@ void CWVehicle::load(const char *name)
 					W = Wheel();
 					tag.write_to(DescribeWheel);
 					Wheels.push_back(W);
+				}
+				if (tag.name()== "CWBeeper")
+				{
+					B = string();
+					tag.write_to(DescribeBeeper);
+					BeeperFiles.push_back(B);
 				}
 			}
 		default:;
@@ -334,6 +345,13 @@ void CWVehicle::draw_init()
 	{
 		(*I).draw_init();
 	}
+	
+	for(vector<string>::iterator I = BeeperFiles.begin(); I!= BeeperFiles.end(); ++I)
+	{
+		CWBeeper B;
+		B.load_wav_file(*I);
+		Beepers.push_back(B);
+	}
 }
 
 void CWVehicle::draw()
@@ -421,6 +439,13 @@ void CWVehicle::reset_to_fall_block()
 	}
 	else
 		reset();
+}
+
+bool CWVehicle::Beep( unsigned int index )
+{
+	if(index>=Beepers.size()) return false;
+	Beepers[index].play_once();
+	return true;
 }
 
 
