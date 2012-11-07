@@ -129,8 +129,8 @@ void CarWorld::draw()
 	float FogCol[3]={0.8f,0.8f,0.8f}; // Define a nice light grey
     glFogfv(GL_FOG_COLOR,FogCol);     // Set the fog color
 	glFogi(GL_FOG_MODE, GL_LINEAR); // Note the 'i' after glFog - the GL_LINEAR constant is an integer.
-    glFogf(GL_FOG_START, 5.f);
-    glFogf(GL_FOG_END, 20.f);
+    glFogf(GL_FOG_START, 5.f); // 5
+    glFogf(GL_FOG_END, 20.f); // last time 20 feet
 	}
 	else glDisable(GL_FOG);
 

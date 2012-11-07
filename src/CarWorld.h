@@ -9,7 +9,7 @@
 
 //#define DEFAULT_VEHICLE "data/Vehicles/82porsch.vhc"
 #define DEFAULT_VEHICLE "data/Vehicles/truck.vhc"
-#define DEFAULT_LANDSCAPE "data/Landscape/landscape.txt"
+#define DEFAULT_LANDSCAPE "data/Landscape/landscape3.txt"
 
 #define EARTH_GRAVITY 9.8f
 

@@ -1,27 +1,12 @@
-function [FV,matrix]=read_off(fn)
+function FV=read_off(fn)
 fid=fopen(fn,'r');
 fgets(fid); % remove off
-para=fscanf(fid,'%d%d%d');
-nVertex=para[1];
-nFace=para[2];
-for i=1:nVertex
-    for j=1:3
-        vertex(j,i)=
-data=fscanf(fid,'%d%d%d');
+data=fscanf(fid,'%f');
 i=0;
 nV=data(i+1);i=i+1;
 nS=data(i+1);i=i+1;
+i=i+1;
 for v=1:nV
-	Vertex(:,v)=data(i+[1:3]);i=i+5;
-end
-m0=min(Vertex(3,:));
-m1=max(Vertex(3,:));
-for f=1:nS
-	sq(:,f)=data(i+[1:3]);i=i+4;
-	FaceVertexCData(f)=63*(Vertex(3,1+sq(1,f))-m0)/(m1-m0)+1;
+	Vertex(:,v)=data(i+[1:3]);i=i+3;
 end
 FV.Vertices=Vertex';
-FV.Faces=1+sq';
-FV.EdgeColor=[0 0 0]+0.5;
-FV.FaceVertexCData=FaceVertexCData';
-matrix=reshape(data(i+[1:9]),3,3);
