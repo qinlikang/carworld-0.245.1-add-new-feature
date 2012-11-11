@@ -211,7 +211,3 @@ void CarWorld::pause_recorder_timer( bool pause/*=true*/ )
 	else
 		m_Recorder->m_Timer.resume();
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> master
