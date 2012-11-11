@@ -1,4 +1,3 @@
-
 #ifndef __CAR_WORLD_H_
 #define __CAR_WORLD_H_
 
@@ -9,7 +8,7 @@
 
 //#define DEFAULT_VEHICLE "data/Vehicles/82porsch.vhc"
 #define DEFAULT_VEHICLE "data/Vehicles/truck.vhc"
-#define DEFAULT_LANDSCAPE "data/Landscape/landscape3.txt"
+#define DEFAULT_LANDSCAPE "data/Landscape/landscape.txt"
 
 #define EARTH_GRAVITY 9.8f
 
@@ -25,8 +24,9 @@ public:
 	void add(CWFeature* AFeature);
 	void add(CWVehicle* AVehicle);
 	void next_camera();
-	void recording();
-	void replaying();
+	void record();
+	void replay();
+	void pause_recorder_timer(bool pause=true);
 	void off_recorder();
 	void DrawOnScreen();
 

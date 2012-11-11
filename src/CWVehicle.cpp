@@ -220,6 +220,11 @@ void CWVehicle::load(const char *name)
 	DescribeWheel["SteerFactor"] =			new HVar<REAL>("SteerFactor",&(W.SteerFactor));
 	DescribeWheel["LockUp"] =				new HVar<bool>("LockUp",&(W.LockUp));
 
+	string B;
+	map<string,HVariable*> DescribeBeeper;
+	DescribeBeeper["SoundFile"] =			new HVar<string>("SoundFile",&B);
+
+
 	XmlTag tag;
 	do
 	{
@@ -240,6 +245,12 @@ void CWVehicle::load(const char *name)
 					W = Wheel();
 					tag.write_to(DescribeWheel);
 					Wheels.push_back(W);
+				}
+				if (tag.name()== "CWBeeper")
+				{
+					B = string();
+					tag.write_to(DescribeBeeper);
+					BeeperFiles.push_back(B);
 				}
 			}
 		default:;
@@ -276,9 +287,9 @@ void CWVehicle::reset()
 
 void CWVehicle::update()
 {
-	if (MyRef.Position.z()<-100)
+	if (is_vehicle_out_of_road())
 	{
-		reset();
+		reset_to_fall_block();
 		return;
 	}
 
@@ -333,6 +344,13 @@ void CWVehicle::draw_init()
 	for (vector<Wheel>::iterator I = Wheels.begin() ; I != Wheels.end() ; I++)
 	{
 		(*I).draw_init();
+	}
+	
+	for(vector<string>::iterator I = BeeperFiles.begin(); I!= BeeperFiles.end(); ++I)
+	{
+		CWBeeper B;
+		B.load_wav_file(*I);
+		Beepers.push_back(B);
 	}
 }
 
@@ -391,3 +409,43 @@ void CWVehicle::SetState(CWVehicleState &state)
 	*(Ref*)(&MyRef) = state.m_Ref;
 	MyCommand = state.m_Command;
 }
+
+bool CWVehicle::is_vehicle_out_of_road()
+{
+	for(vector<Wheel>::const_iterator it = Wheels.begin();it!=Wheels.end();++it)
+	{
+		Contact tmp = m_CarWorld->m_Landscape->GetPointContact(it->MyRef.Position,4.0);
+		if(tmp.Found)
+			return false;
+	}
+	return true;
+}
+
+void CWVehicle::reset_to_fall_block()
+{
+	CWLandscape& landscape = *(m_CarWorld->m_Landscape);
+	if(landscape.LastContactBlock!=landscape.MyWorldBlocks.end())
+	{
+		Point3D v0 = (landscape.LastContactBlock->MyOFFVertexes[0]).Position;
+		Point3D v1 = (landscape.LastContactBlock->MyOFFVertexes[1]).Position;
+		Point3D v2 = (landscape.LastContactBlock->MyOFFVertexes[2]).Position;
+		Point3D reset_pt = (v0+v1)/2;
+		Point3D forward_direction = (v2-v0);
+		forward_direction.normalize();
+		reset();
+		MyRef.Position = reset_pt;
+		MyRef.Y = forward_direction;
+		MyRef.Position.z()+= 2.0;
+	}
+	else
+		reset();
+}
+
+bool CWVehicle::Beep( unsigned int index )
+{
+	if(index>=Beepers.size()) return false;
+	Beepers[index].play_once();
+	return true;
+}
+
+

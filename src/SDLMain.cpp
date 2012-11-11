@@ -18,6 +18,9 @@
 
 #include <SDL.h>
 
+#include "CWMixerManager.h"
+#include "CWBeeper.h"
+
 HWindow::~HWindow() {}
 HJoystick::~HJoystick(){}
 
@@ -160,6 +163,8 @@ int find(int argc, char **argv, const char *v)
 
 extern ofstream herr;
 
+MixerManagerSingleton mixer;
+
 int main(int argc, char *argv[])
 {
 	streambuf* cout_streambuf = cout.rdbuf();
@@ -210,9 +215,28 @@ int main(int argc, char *argv[])
 		}
 		SDL_WM_SetCaption(app->name(), app->name());
 		
+		// init SDL_Mixer
+		if(GetMixer().Init()==-1)
+		{
+			cout << "ERROR: Couldn't initiate sdl_mixer "<< endl;
+			cout << GetMixer().GetError()<<endl;
+			return 3;
+		}
+
 	//do OpenGL init
 		app->draw_init();
 		app->resize(screen->w, screen->h);
+
+		//load the chunks
+		CWBeeper music;
+		if(music.load_wav_file("data/Sounds/song.wav"))
+		{
+			music.play_n_times(-1);
+		}
+		else
+		{
+			cout<<"loading music error"<<endl;
+		}
 
 		bool done = false;
 		Uint32 CurrentTime = SDL_GetTicks();
@@ -260,6 +284,7 @@ int main(int argc, char *argv[])
 		delete app;
 		app = NULL;
 		cout.rdbuf(cout_streambuf);
+		GetMixer().Quit();
 		SDL_Quit();
 		return 0;
 	}

@@ -3,7 +3,7 @@
 #define __CW_VEHICLE_H_
 
 #include "CarWorldClasses.h"
-
+#include "CWBeeper.h"
 
 class CWVehicle;
 
@@ -94,6 +94,8 @@ public:
 	void load(const char *name);
 	virtual ~CWVehicle();
 	void reset();
+	void reset_to_fall_block();
+	bool is_vehicle_out_of_road();
 	void update();
 	REAL GetSpeed() const; //returns speed in kph
 
@@ -109,6 +111,8 @@ public:
 
 	CWVehicleState GetState();
 	void SetState(CWVehicleState &state);
+
+	bool Beep(unsigned int index);
 public:
 //read in the configuration file
 	string ModelFile;
@@ -131,6 +135,11 @@ public:
 	InertRef MyRef;
 	vector<Wheel> Wheels;
 	OFFObject Model;
+	vector<string> BeeperFiles;
+	vector<CWBeeper> Beepers;
+
+	WorldBlock* LastHitBlock;
+	WorldBlock::MyTriangle LastHitTriangle;
 };
 
 #endif //__CW_VEHICLE_H_

@@ -12,6 +12,39 @@
 #include <iostream>
 #include <ctime>
 
+//!  RecorderTimer 
+/*!
+	for recording time, when recording.
+	can pause and resume.
+	record the clock passed since start (except pausing time)
+*/
+class RecorderTimer
+{
+	long m_TimeElapse; // clocks passed by since start to record
+	bool m_Toggled;    // mark if the timer is on
+	std::clock_t m_lastTime; // last call time
+public:
+	RecorderTimer():m_TimeElapse(0),m_Toggled(false){}
+
+	void reset(){m_TimeElapse=0;m_lastTime=std::clock();}
+	void start(){m_Toggled=true;reset();}
+
+	void pause(){m_Toggled=false;}
+	void resume(){m_Toggled=true;m_lastTime=std::clock();}
+
+	long get_elapse_clocks(){update(); return m_TimeElapse;}
+private:
+	void update()
+	{
+		if(m_Toggled)
+		{
+			m_TimeElapse += std::clock()-m_lastTime;
+			m_lastTime = std::clock();
+		}
+	}
+};
+
+
 //! Base class of record item
 /*!
 	the smart pointers of this class will be record
@@ -24,7 +57,7 @@ public:
 	virtual ~CWRecordItem(){}
 	virtual void write_to_os(std::ostream& os){os<<m_TimeElapse<<endl;}
 
-	double m_TimeElapse; // milliseconds passed by since start to record
+	double m_TimeElapse; // seconds passed by since start to record
 	typedef CWRecordItem RecorderItemBase;
 };
 typedef boost::shared_ptr<CWRecordItem> CWRecordItemPtr;
@@ -52,8 +85,8 @@ class CWRecorder :
 public:
 	enum RecorderState
 	{
-		ERS_Recording,
-		ERS_Replaying,
+		ERS_Record,
+		ERS_Replay,
 		ERS_OFF
 	};
 
@@ -80,10 +113,10 @@ public:
 
 	void set_state(RecorderState state){m_RecorderState=state;reset();}
 	RecorderState get_state()const{return m_RecorderState;}
-	bool is_replay_and_finished()const{return m_RecorderState==ERS_Replaying&&m_Cursor==m_Records.end();}
+	bool is_replay_and_finished()const{return m_RecorderState==ERS_Replay&&m_Cursor==m_Records.end();}
 public:
 	static const string RecordPath;
-	std::clock_t m_startTime;
+	RecorderTimer m_Timer;
 	string m_strOtherMsg;// other msg about recorder that will print onto screen
 protected:
 	RecorderState m_RecorderState;
@@ -96,7 +129,7 @@ class VehicleStateRecorder : public CWRecorder
 {
 
 public:
-	VehicleStateRecorder(CWVehicle* pVehicle=NULL,RecorderState state=ERS_Recording);
+	VehicleStateRecorder(CWVehicle* pVehicle=NULL,RecorderState state=ERS_Record);
 
 	virtual void record();
 	virtual void replay();
@@ -108,6 +141,7 @@ public:
 private:
 	CWVehicle* m_Vehicle;
 };
+
 
 
 

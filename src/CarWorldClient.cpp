@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include "H_Variable.h"
+#include <boost/bind.hpp>
 
 #define CLIENT_TIMEOUT 200
 
@@ -144,8 +145,8 @@ void CarWorldClient::draw_init()
 	m_Executables["bind"] = new BindKey(this);
 	m_Executables["reset"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::reset);
 	m_Executables["next_camera"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::next_camera);
-	m_Executables["recording"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::recording);
-	m_Executables["replaying"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::replaying);
+	m_Executables["record"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::record);
+	m_Executables["replay"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::replay);
 	m_Executables["off_recorder"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::off_recorder);
 	m_Executables["toggleconsole"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::toggleconsole);
 	m_Executables["help"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::print_help);
@@ -156,18 +157,24 @@ void CarWorldClient::draw_init()
 	m_Executables["fogUp"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_up);
 	m_Executables["fogDown"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_down);
 
+	m_Executables["beep1"] = new BoostBindCall(	boost::bind(&CWVehicle::Beep,m_Vehicle,0));
+	m_Executables["beep2"] = new BoostBindCall(	boost::bind(&CWVehicle::Beep,m_Vehicle,1));
+
 	bind(SDLK_TAB,"toggleconsole");
 	bind(SDLK_F2, "next_camera");
 	bind(SDLK_F3, "reset");
 	bind(SDLK_F4, "set use_joystick 1");
 	bind(SDLK_F5, "set use_joystick 0");
 
-	bind(SDLK_F6, "recording");
-	bind(SDLK_F7, "replaying");
+	bind(SDLK_F6, "record");
+	bind(SDLK_F7, "replay");
 	bind(SDLK_F8, "off_recorder");
 	// XX addfog
-	bind(SDLK_1, "fogUp");
-	bind(SDLK_2, "fogDown");
+	bind(SDLK_F9, "fogUp");
+	bind(SDLK_F10, "fogDown");
+
+	bind(SDLK_1,"beep1");
+	bind(SDLK_2,"beep2");
 
 	execute_cfg(ConfigurationFileName());
 }
@@ -215,6 +222,7 @@ const char *CarWorldClient::name()
 void CarWorldClient::toggleconsole()
 {
 	IsPromptMode = !IsPromptMode;
+	m_CarWorld->pause_recorder_timer(IsPromptMode);
 }
 
 void CarWorldClient::execute_cfg(const char *FileName)
@@ -343,10 +351,12 @@ void CarWorldClient::key_down(SDLKey AHKey, char c)
 	{
 		string ReturnedCommand(hbuf.HitKey(AHKey,c));
 		if (!ReturnedCommand.empty())
-			pars_command(ReturnedCommand.c_str());
+			pars_command(ReturnedCommand.c_str());	
 	}
 	map<SDLKey,string>::iterator I = KeyBindings.find(AHKey);
-	if (I != KeyBindings.end())
+	if (I != KeyBindings.end()&&!IsPromptMode)// LX: to disable further process of keydown msg when using console.
+		pars_command((*I).second.c_str());
+	else if(I != KeyBindings.end()&&IsPromptMode&&I->second=="toggleconsole")// LX: enable toggleconsole msg
 		pars_command((*I).second.c_str());
 	//else
 	//	cout << "\"" << KeyMap.find(AHKey) << "\" key unbound\n";
@@ -427,8 +437,11 @@ void CarWorldClient::on_idle(unsigned int elapsed_time)
 				time_since_send = 0;
 			}
 		}
-		UpdateCommand(&m_Vehicle->MyCommand, CurrentJoystick);
-		m_CarWorld->update(elapsed_time);
+		if(!IsPromptMode)
+		{
+			UpdateCommand(&m_Vehicle->MyCommand, CurrentJoystick);
+			m_CarWorld->update(elapsed_time);
+		}// LX: to disable further process of keydown msg when using console.
 		draw();
 	}
 }

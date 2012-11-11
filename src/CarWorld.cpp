@@ -1,5 +1,3 @@
-
-
 #include "H_Standard.h"
 #include "CarWorld.h"
 #include "H_Graphics.h"
@@ -129,8 +127,8 @@ void CarWorld::draw()
 	float FogCol[3]={0.8f,0.8f,0.8f}; // Define a nice light grey
     glFogfv(GL_FOG_COLOR,FogCol);     // Set the fog color
 	glFogi(GL_FOG_MODE, GL_LINEAR); // Note the 'i' after glFog - the GL_LINEAR constant is an integer.
-    glFogf(GL_FOG_START, 5.f); // 5
-    glFogf(GL_FOG_END, 20.f); // last time 20 feet
+    glFogf(GL_FOG_START, 5.f);
+    glFogf(GL_FOG_END, 20.f);
 	}
 	else glDisable(GL_FOG);
 
@@ -190,14 +188,14 @@ void CarWorld::DrawOnScreen()
 	glEnable(GL_LIGHTING);
 }
 
-void CarWorld::recording()
+void CarWorld::record()
 {
-	m_Recorder->set_state(CWRecorder::ERS_Recording);
+	m_Recorder->set_state(CWRecorder::ERS_Record);
 }
 
-void CarWorld::replaying()
+void CarWorld::replay()
 {
-	m_Recorder->set_state(CWRecorder::ERS_Replaying);
+	m_Recorder->set_state(CWRecorder::ERS_Replay);
 }
 
 void CarWorld::off_recorder()
@@ -206,3 +204,10 @@ void CarWorld::off_recorder()
 	m_Recorder->set_state(CWRecorder::ERS_OFF);
 }
 
+void CarWorld::pause_recorder_timer( bool pause/*=true*/ )
+{
+	if(pause)
+		m_Recorder->m_Timer.pause();
+	else
+		m_Recorder->m_Timer.resume();
+}

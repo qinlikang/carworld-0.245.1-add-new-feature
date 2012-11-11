@@ -148,6 +148,8 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\CWBeeper.cpp" />
+    <ClCompile Include="..\src\CWMixerManager.cpp" />
     <ClCompile Include="..\src\CWRecorder.cpp" />
     <ClCompile Include="..\src\DXJoystick.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -244,9 +246,12 @@
     <ClCompile Include="..\src\WorldBlock.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\CWBeeper.h" />
+    <ClInclude Include="..\src\CWMixerManager.h" />
     <ClInclude Include="..\src\CWRecorder.h" />
     <ClInclude Include="..\src\DXJoystick.h" />
     <ClInclude Include="..\src\H_Main.h" />
+    <ClInclude Include="..\src\H_Singleton.h" />
     <ClInclude Include="..\src\SDLJoystick.h" />
     <ClInclude Include="..\src\automat.h" />
     <ClInclude Include="..\src\H_Geometry.h" />
