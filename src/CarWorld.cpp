@@ -179,6 +179,36 @@ void CarWorld::DrawOnScreen()
 	if(m_Recorder!=NULL)
 		m_Recorder->draw_on_screen();
 
+	// test for u,v
+	WorldBlock::MyTriangle* pTri;
+	if(m_Landscape->LastContactBlock!=m_Landscape->MyWorldBlocks.end() 
+		&& (pTri=m_Landscape->LastContactBlock->PreviousTriangle)!=NULL)
+	{
+
+		double u,v;
+		Point3D carPos;
+		InCarCam* in_car_cam = dynamic_cast<InCarCam*>(m_Camera);
+		if(in_car_cam!=NULL)
+		{
+			carPos = in_car_cam->m_Vehicle->MyRef.Position;
+			Point2D carPlanePos(carPos.x(),carPos.y());
+			if(pTri->GetInsidePointUVParameter(carPlanePos,u,v))
+			{
+				{
+					char UVindicator[30]={0};
+					sprintf(UVindicator,"u:%5.2f, v:%5.2f",u,v);
+					Hgl::WriteText(UVindicator, Point2D(.0f,.0f)); //write global position
+				}
+				{
+					Point3D pt = pTri->GetPointByUV(u,v);
+					char RoadPoint[50]={0};
+					sprintf(RoadPoint,"%5.2f,%5.2f,%5.2f !! %5.2f,%5.2f,%5.2f",pt.x()	,pt.y()	,pt.z(), carPos.x()	,carPos.y()	,carPos.z()	);
+					Hgl::WriteText(RoadPoint, Point2D(-.2f,-.2f)); //write global position
+				}
+			}
+		}
+	}
+
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
