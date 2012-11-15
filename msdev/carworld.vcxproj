@@ -150,6 +150,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\CWBeeper.cpp" />
     <ClCompile Include="..\src\CWMixerManager.cpp" />
+    <ClCompile Include="..\src\CWMushrom.cpp" />
     <ClCompile Include="..\src\CWRecorder.cpp" />
     <ClCompile Include="..\src\DXJoystick.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -246,8 +247,10 @@
     <ClCompile Include="..\src\WorldBlock.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\ColladeObject.h" />
     <ClInclude Include="..\src\CWBeeper.h" />
     <ClInclude Include="..\src\CWMixerManager.h" />
+    <ClInclude Include="..\src\CWMushrom.h" />
     <ClInclude Include="..\src\CWRecorder.h" />
     <ClInclude Include="..\src\DXJoystick.h" />
     <ClInclude Include="..\src\H_Main.h" />
