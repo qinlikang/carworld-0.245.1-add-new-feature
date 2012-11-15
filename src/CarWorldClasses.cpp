@@ -131,6 +131,9 @@ Contact CWLandscape::GetFixedVectorContact( const FixedVector &AVector )
 			if(tmp.Position.distance(AVector.Position)<AVector.Value.norm()+EPSILON)
 			{
 				LastContactBlock = I;
+				LastContactTriangle = I->PreviousTriangle;
+				Point2D pt(tmp.Position.x()	,tmp.Position.y());
+				LastContactTriangle->GetInsidePointUVParameter(pt,LastU,LastV);
 				return tmp;
 			}
 			else
@@ -151,6 +154,9 @@ Contact CWLandscape::GetPointContact( const Point3D &APoint,double distance )
 			if(tmp.Position.distance(APoint)<distance+EPSILON)
 			{
 				LastContactBlock = I;
+				LastContactTriangle = I->PreviousTriangle;
+				Point2D pt(tmp.Position.x()	,tmp.Position.y());
+				LastContactTriangle->GetInsidePointUVParameter(pt,LastU,LastV);
 				return tmp;
 			}
 			else

@@ -426,10 +426,35 @@ void CWVehicle::reset_to_fall_block()
 	CWLandscape& landscape = *(m_CarWorld->m_Landscape);
 	if(landscape.LastContactBlock!=landscape.MyWorldBlocks.end())
 	{
-		Point3D v0 = (landscape.LastContactBlock->MyOFFVertexes[0]).Position;
-		Point3D v1 = (landscape.LastContactBlock->MyOFFVertexes[1]).Position;
-		Point3D v2 = (landscape.LastContactBlock->MyOFFVertexes[2]).Position;
-		Point3D reset_pt = (v0+v1)/2;
+
+		WorldBlock::MyTriangle* LastHitTri = landscape.LastContactTriangle;
+
+		Point3D v0,v1,v2;
+		Point3D reset_pt;
+
+		if(LastHitTri!=NULL)
+		{
+			int tri_index = LastHitTri->MyI;
+
+			v0 = (landscape.LastContactBlock->MyOFFVertexes[tri_index]).Position;
+			v1 = (landscape.LastContactBlock->MyOFFVertexes[tri_index+1]).Position;
+			v2 = (landscape.LastContactBlock->MyOFFVertexes[tri_index+2]).Position;
+
+			reset_pt = LastHitTri->GetPointByUV(0,landscape.LastV);
+		}
+		else
+		{
+			int tri_index = 0;
+
+			v0 = (landscape.LastContactBlock->MyOFFVertexes[tri_index]).Position;
+			v1 = (landscape.LastContactBlock->MyOFFVertexes[tri_index+1]).Position;
+			v2 = (landscape.LastContactBlock->MyOFFVertexes[tri_index+2]).Position;
+
+			reset_pt = (v0+v1)/2;
+		}
+
+		// notice that edge v0v2 consist the road curb
+
 		Point3D forward_direction = (v2-v0);
 		forward_direction.normalize();
 		reset();

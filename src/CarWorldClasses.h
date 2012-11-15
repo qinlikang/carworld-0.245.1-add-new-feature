@@ -67,6 +67,8 @@ public:
 //private:
 	list<WorldBlock> MyWorldBlocks;
 	list<WorldBlock>::const_iterator LastContactBlock;
+	WorldBlock::MyTriangle* LastContactTriangle;
+	double LastU, LastV;
 };
 
 #endif //__CAR_WORLD_CLASSES_H_

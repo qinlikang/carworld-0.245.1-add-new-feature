@@ -139,7 +139,6 @@ public:
 	vector<CWBeeper> Beepers;
 
 	WorldBlock* LastHitBlock;
-	WorldBlock::MyTriangle LastHitTriangle;
 };
 
 #endif //__CW_VEHICLE_H_
