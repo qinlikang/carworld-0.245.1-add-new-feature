@@ -20,6 +20,7 @@
 
 #include "CWMixerManager.h"
 #include "CWBeeper.h"
+#include "OFFObjectPool.h"
 
 HWindow::~HWindow() {}
 HJoystick::~HJoystick(){}
@@ -238,6 +239,7 @@ int main(int argc, char *argv[])
 			cout<<"loading music error"<<endl;
 		}
 
+		
 		bool done = false;
 		Uint32 CurrentTime = SDL_GetTicks();
 		while (!done)
@@ -270,6 +272,22 @@ int main(int argc, char *argv[])
 						app->resize(event.resize.w, event.resize.h);
 					}
 					break;
+
+				case SDL_MOUSEBUTTONDOWN:
+					{
+
+					}
+					break;
+				case SDL_MOUSEMOTION:
+					{
+
+					}
+					break;
+				case SDL_MOUSEBUTTONUP:
+					{
+
+					}
+					break;
 					
 				case SDL_QUIT:
 					done = true;
@@ -281,6 +299,7 @@ int main(int argc, char *argv[])
 			CurrentTime = NewTime;
 			app->draw();
 		}
+		OFFObjectPool::release();
 		delete app;
 		app = NULL;
 		cout.rdbuf(cout_streambuf);

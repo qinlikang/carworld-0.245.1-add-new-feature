@@ -9,6 +9,8 @@
 #include <iostream>
 #include "H_Variable.h"
 #include <boost/bind.hpp>
+#include "CWMushrom.h"
+#include "OFFObjectPool.h"
 
 #define CLIENT_TIMEOUT 200
 
@@ -99,6 +101,12 @@ CarWorldClient::CarWorldClient(bool full_screen) :
 	m_CarWorld = new CarWorld(TimeRefreshRate(),DEFAULT_LANDSCAPE);
 	m_Vehicle = new CWVehicle(DEFAULT_VEHICLE);
 	m_CarWorld->add(m_Vehicle);
+
+	CWMushrom* pMushroom = new CWMushrom;
+	pMushroom->MyRef = m_Vehicle->MyRef;
+	pMushroom->MyRef.Position.z()+=100;
+	m_CarWorld->add(pMushroom);
+
 }
 
 void CarWorldClient::draw_init()
@@ -109,6 +117,10 @@ void CarWorldClient::draw_init()
 	m_Hgl = new Hgl(m_window);
 	m_Hgl->MakeCurrent();
 	cout << endl;
+
+	// set up the off pool and load off files
+	OFFObjectPool::sharedOFFPool()->loadOneFromFile("data/Landscape/mushroom.off","mushroom");
+	OFFObjectPool::sharedOFFPool()->loadOneFromFile("data/Landscape/cone.off","cone");
 
 	m_CarWorld->draw_init();
 

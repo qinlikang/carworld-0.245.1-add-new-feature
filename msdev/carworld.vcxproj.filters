@@ -97,6 +97,9 @@
     <ClCompile Include="..\src\CWMushrom.cpp">
       <Filter>CarWorld specific</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\OFFObjectPool.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\DXJoystick.h">
@@ -187,6 +190,9 @@
       <Filter>CarWorld specific</Filter>
     </ClInclude>
     <ClInclude Include="..\src\CWMushrom.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\OFFObjectPool.h">
       <Filter>CarWorld specific</Filter>
     </ClInclude>
   </ItemGroup>

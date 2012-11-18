@@ -3,7 +3,7 @@
 #include "H_Graphics.h"
 #include <stdio.h>
 #include <sstream>
-
+#include "CWMushrom.h"
 //CLASS CarWorld:
 CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
 						m_Landscape(new CWLandscape(LandscapeFile)),

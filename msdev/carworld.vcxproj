@@ -164,6 +164,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\src\OFFObjectPool.cpp" />
     <ClCompile Include="..\src\SDLJoystick.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -255,6 +256,7 @@
     <ClInclude Include="..\src\DXJoystick.h" />
     <ClInclude Include="..\src\H_Main.h" />
     <ClInclude Include="..\src\H_Singleton.h" />
+    <ClInclude Include="..\src\OFFObjectPool.h" />
     <ClInclude Include="..\src\SDLJoystick.h" />
     <ClInclude Include="..\src\automat.h" />
     <ClInclude Include="..\src\H_Geometry.h" />
