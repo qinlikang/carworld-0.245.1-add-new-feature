@@ -272,20 +272,9 @@ int main(int argc, char *argv[])
 						app->resize(event.resize.w, event.resize.h);
 					}
 					break;
-
-				case SDL_MOUSEBUTTONDOWN:
-					{
-
-					}
-					break;
 				case SDL_MOUSEMOTION:
 					{
-
-					}
-					break;
-				case SDL_MOUSEBUTTONUP:
-					{
-
+						app->mouse_motion(event.motion);
 					}
 					break;
 					

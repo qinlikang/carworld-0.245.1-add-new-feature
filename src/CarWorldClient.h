@@ -27,6 +27,8 @@ public:
 
 	void key_down(SDLKey AHKey, char c);
 	void resize(unsigned int width, unsigned int height);
+	void mouse_motion(const SDL_MouseMotionEvent& event);
+	
 	void on_idle(unsigned int elapsed_time);
 
 	void draw();

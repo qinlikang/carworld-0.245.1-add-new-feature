@@ -49,6 +49,8 @@ void CarWorld::add(CWVehicle* AVehicle)
 	add((CWFeature*)AVehicle);
 	add(m_Camera = new InCarCam(AVehicle));
 	add(m_Recorder = new VehicleStateRecorder(AVehicle));
+
+	add(new FreeCam(AVehicle));
 	add(new FixCam(AVehicle));
 	add(new FollowCam(AVehicle));
 	add(new SateliteCam(AVehicle));

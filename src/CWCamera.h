@@ -14,6 +14,7 @@ public:
 	virtual ~CWCamera();
 	virtual Ref GetRef() = 0;
 	virtual void DrawOnScreen();
+	virtual void OnMouseDrag(int move_x,int move_y){}
 protected:
 	static const Point3D X,Y,Z,Up;
 };
@@ -59,6 +60,24 @@ public:
 private:
 	CWVehicle *m_Vehicle;
 	REAL m_height;
+};
+
+class FreeCam : public CWCamera
+{
+public:
+	FreeCam(CWVehicle *Vehicle, REAL sensitivity = 1.0f,REAL radius = 10.f,REAL theta=0.f,REAL phi=90.0f);
+	virtual ~FreeCam();
+	Ref GetRef();
+	virtual void OnMouseDrag(int move_x,int move_y);
+
+	virtual void DrawOnScreen();
+private:
+	CWVehicle *m_Vehicle;
+	REAL m_radius; 
+	REAL m_theta;  // 
+	REAL m_phi;    // range [10, 170]
+
+	REAL m_sensitivity;
 };
 
 #endif //__CW_CAMERA_H_

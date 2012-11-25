@@ -474,3 +474,11 @@ void CarWorldClient::draw()
 		Hgl::SwapBuffers();
 	}
 }
+
+void CarWorldClient::mouse_motion( const SDL_MouseMotionEvent& event )
+{
+	if(event.state==SDL_PRESSED)
+	{
+		m_CarWorld->m_Camera->OnMouseDrag(event.xrel,event.yrel);
+	}
+}
