@@ -100,6 +100,9 @@
     <ClCompile Include="..\src\OFFObjectPool.cpp">
       <Filter>CarWorld specific</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Box3D.cpp">
+      <Filter>Generic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\DXJoystick.h">
@@ -194,6 +197,9 @@
     </ClInclude>
     <ClInclude Include="..\src\OFFObjectPool.h">
       <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Box3D.h">
+      <Filter>Generic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

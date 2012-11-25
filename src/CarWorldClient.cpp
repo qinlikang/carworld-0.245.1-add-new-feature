@@ -9,6 +9,7 @@
 #include <iostream>
 #include "H_Variable.h"
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
 #include "CWMushrom.h"
 #include "OFFObjectPool.h"
 
@@ -82,6 +83,20 @@ private:
 	CarWorldClient *CWC;
 };
 
+class BoostBindCall : public HExecutable
+{
+private:
+	boost::function<void()> m_Callback;
+public:
+	template <class T>
+	BoostBindCall(T& call_back):m_Callback(call_back){}
+
+	virtual void exec(const Command& c)
+	{
+		m_Callback();
+	}
+};
+
 //CLASS CarWorldClient
 CarWorldClient::CarWorldClient(bool full_screen) :
 	m_Hgl(NULL),
@@ -102,10 +117,8 @@ CarWorldClient::CarWorldClient(bool full_screen) :
 	m_Vehicle = new CWVehicle(DEFAULT_VEHICLE);
 	m_CarWorld->add(m_Vehicle);
 
-	CWMushrom* pMushroom = new CWMushrom;
-	pMushroom->MyRef = m_Vehicle->MyRef;
-	pMushroom->MyRef.Position.z()+=100;
-	m_CarWorld->add(pMushroom);
+
+	AddMushrooms(m_CarWorld);
 
 }
 
@@ -172,6 +185,12 @@ void CarWorldClient::draw_init()
 	m_Executables["beep1"] = new BoostBindCall(	boost::bind(&CWVehicle::Beep,m_Vehicle,0));
 	m_Executables["beep2"] = new BoostBindCall(	boost::bind(&CWVehicle::Beep,m_Vehicle,1));
 
+	m_Executables["zoom_in"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::zoom_in);
+	m_Executables["zoom_out"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::zoom_out);
+
+	m_Executables["show_box"] =  new BoostBindCall(	boost::bind(&CWVehicle::SetShowBox,m_Vehicle,true));
+	m_Executables["no_show_box"] =  new BoostBindCall(	boost::bind(&CWVehicle::SetShowBox,m_Vehicle,false));
+
 	bind(SDLK_TAB,"toggleconsole");
 	bind(SDLK_F2, "next_camera");
 	bind(SDLK_F3, "reset");
@@ -188,7 +207,19 @@ void CarWorldClient::draw_init()
 	bind(SDLK_1,"beep1");
 	bind(SDLK_2,"beep2");
 
+	bind(SDLK_MINUS,"zoom_out");
+	bind(SDLK_EQUALS,"zoom_in");
+
+	bind(SDLK_n,"no_show_box");
+	bind(SDLK_b,"show_box");
+
 	execute_cfg(ConfigurationFileName());
+
+
+	// resource adjust
+	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Scale(Point3D(0.01f,0.01f,0.01f));
+	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Translate(Point3D(-1.0f,-1.f,0.f));
+	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Rotate(Point3D(-PI/2,0,0));
 }
 
 CarWorldClient::~CarWorldClient()
@@ -480,5 +511,31 @@ void CarWorldClient::mouse_motion( const SDL_MouseMotionEvent& event )
 	if(event.state==SDL_PRESSED)
 	{
 		m_CarWorld->m_Camera->OnMouseDrag(event.xrel,event.yrel);
+	}
+}
+
+void CarWorldClient::mouse_wheel( const SDL_MouseButtonEvent& event )
+{
+	if(event.button == SDL_BUTTON_WHEELDOWN)
+	{
+		m_CarWorld->zoom_in();
+	}
+	else if(event.button == SDL_BUTTON_WHEELUP)
+	{
+		m_CarWorld->zoom_out();
+	}
+}
+
+void CarWorldClient::AddMushrooms( CarWorld * m_CarWorld )
+{
+	CWLandscape* landscape = m_CarWorld->m_Landscape;
+	for(list<WorldBlock>::iterator it = landscape->MyWorldBlocks.begin(); it != landscape->MyWorldBlocks.end(); ++it)
+	{
+		CWMushrom* pMushroom = new CWMushrom;
+		pMushroom->MyRef.Position = it->Triangles[0].GetPointByUV(0,0) + Point3D(0,0,1);
+		pMushroom->MyRef.Y = it->Triangles[0].GetForwardDirection();
+		pMushroom->MyRef.X = pMushroom->MyRef.Y ^ pMushroom->MyRef.Z;
+		m_CarWorld->add(pMushroom);
+		m_Vehicle->AddToColladeList(pMushroom);
 	}
 }

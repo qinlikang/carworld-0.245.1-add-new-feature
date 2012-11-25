@@ -17,7 +17,8 @@ CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
 						MyTimeRefreshRate(TimeRefreshRate),
 						draw_console(false),
 						draw_background(true),
-						LightDirection(-.6f,-.4f,1.f)
+						LightDirection(-.6f,-.4f,1.f),
+						m_Vehicle(NULL)
 {
 	m_fogon=false;
 	add(m_Landscape);
@@ -54,6 +55,8 @@ void CarWorld::add(CWVehicle* AVehicle)
 	add(new FixCam(AVehicle));
 	add(new FollowCam(AVehicle));
 	add(new SateliteCam(AVehicle));
+
+	m_Vehicle = AVehicle;
 }
 
 //precondition: m_Camera is a pointer to a CWFeature in m_Features
@@ -211,6 +214,11 @@ void CarWorld::DrawOnScreen()
 		}
 	}
 
+
+	char BonusHint[30]={0};
+	sprintf(BonusHint,"Score: %d",m_Vehicle->m_MushroomCnt);
+	Hgl::WriteText(BonusHint, Point2D(.0f,-.90f)); //write global position
+
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -242,4 +250,35 @@ void CarWorld::pause_recorder_timer( bool pause/*=true*/ )
 		m_Recorder->m_Timer.pause();
 	else
 		m_Recorder->m_Timer.resume();
+}
+
+void CarWorld::zoom_in()
+{
+	FreeCam* cam = dynamic_cast<FreeCam*>(m_Camera);
+	if(cam)
+	{
+		cam->ZoomIn();
+	}
+}
+
+void CarWorld::zoom_out()
+{
+	FreeCam* cam = dynamic_cast<FreeCam*>(m_Camera);
+	if(cam)
+	{
+		cam->ZoomOut();
+	}
+}
+
+void CarWorld::remove( const CWFeature* AFeature )
+{
+	for(list<CWFeature*>::iterator it=m_Features.begin(); it!= m_Features.end();++it)
+	{
+		if(AFeature==(*it))
+		{
+			delete (*it);
+			m_Features.erase(it);
+			return;
+		}
+	}
 }

@@ -174,7 +174,7 @@ void findPlane(REAL plane[4], Point<3,T> &v0, Point<3,T> &v1, Point<3,T> &v2)
 }
 
 template<class T>
-REAL calcPlane(REAL plane[4],Point<3,T>& v0)
+REAL SubstituteIntoPlane(const REAL plane[4],const Point<3,T>& v0)
 {
 	return (plane[0] * v0.x() + plane[1] * v0.y() + plane[2] * v0.z())+plane[3];
 }

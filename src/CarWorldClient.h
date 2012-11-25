@@ -28,7 +28,8 @@ public:
 	void key_down(SDLKey AHKey, char c);
 	void resize(unsigned int width, unsigned int height);
 	void mouse_motion(const SDL_MouseMotionEvent& event);
-	
+	void mouse_wheel(const SDL_MouseButtonEvent& event);
+
 	void on_idle(unsigned int elapsed_time);
 
 	void draw();
@@ -72,6 +73,7 @@ private:
 	int ID;
 	void SendState();
 	bool RecieveState();
+	void AddMushrooms( CarWorld * m_CarWorld );
 	map<int,CWVehicle*> m_Opponents;
 //CarWorld
 	CWVehicle *m_Vehicle;

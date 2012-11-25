@@ -5,6 +5,7 @@
 #include "H_Graphics.h"
 #include "H_Variable.h"
 #include "H_XML.h"
+#include <boost/bind.hpp>
 
 //CLASS CWCommand
 CWCommand::CWCommand() : GasBrake(0), Steer(0), SteerFeedBack(0), HandBrake(false)
@@ -177,6 +178,7 @@ void Wheel::draw()
 
 //CLASS CWVehicle:
 CWVehicle::CWVehicle(const char *name)
+	: m_MushroomCnt(0),m_bShowBox(false)
 {
 	MyDriveTrain = DriveTrain(RedLine, MaxTorque);
 	MyRef = InertRef(Mass, MassDistrib);
@@ -317,6 +319,9 @@ void CWVehicle::update()
 
 	//make the rest of the car follow:
 	UpdateCWVehicleParams();
+
+//     Model.MyBox.VisitAllPoint(boost::bind(&CWVehicle::LocalPosToGlobalPos,this,_1));
+	CollisionTest();
 }
 
 REAL CWVehicle::GetSpeed() const //returns speed in kph
@@ -370,7 +375,7 @@ void CWVehicle::drawShape()
 	//don't draw the body if we are using this car's interior-camera
 	InCarCam* InCam = dynamic_cast<InCarCam*>(m_CarWorld->m_Camera);
 	if ((InCam==NULL) || (InCam->m_Vehicle!=this))
-		Model.draw(MyRef.GetRef(Point3D(0,0,0)));
+		Model.draw(MyRef.GetRef(Point3D(0,0,0)),m_bShowBox);
 }
 
 void CWVehicle::ProjectShadow(const Point3D &LightDirection)
@@ -394,6 +399,7 @@ void CWVehicle::ProjectShadow(const Point3D &LightDirection)
 void CWVehicle::drawInfo()
 {
 	MyDriveTrain.drawInfo(MyRef.Speed.norm());
+
 }
 
 CWVehicleState CWVehicle::GetState()
@@ -429,33 +435,20 @@ void CWVehicle::reset_to_fall_block()
 
 		WorldBlock::MyTriangle* LastHitTri = landscape.LastContactTriangle;
 
-		Point3D v0,v1,v2;
 		Point3D reset_pt;
 
 		if(LastHitTri!=NULL)
 		{
-			int tri_index = LastHitTri->MyI;
-
-			v0 = (landscape.LastContactBlock->MyOFFVertexes[tri_index]).Position;
-			v1 = (landscape.LastContactBlock->MyOFFVertexes[tri_index+1]).Position;
-			v2 = (landscape.LastContactBlock->MyOFFVertexes[tri_index+2]).Position;
-
 			reset_pt = LastHitTri->GetPointByUV(0,landscape.LastV);
 		}
 		else
 		{
-			int tri_index = 0;
-
-			v0 = (landscape.LastContactBlock->MyOFFVertexes[tri_index]).Position;
-			v1 = (landscape.LastContactBlock->MyOFFVertexes[tri_index+1]).Position;
-			v2 = (landscape.LastContactBlock->MyOFFVertexes[tri_index+2]).Position;
-
-			reset_pt = (v0+v1)/2;
+			reset_pt = LastHitTri->GetPointByUV(0,0);
 		}
 
 		// notice that edge v0v2 consist the road curb
 
-		Point3D forward_direction = (v2-v0);
+		Point3D forward_direction = LastHitTri->GetForwardDirection();
 		forward_direction.normalize();
 		reset();
 		MyRef.Position = reset_pt;
@@ -471,6 +464,51 @@ bool CWVehicle::Beep( unsigned int index )
 	if(index>=Beepers.size()) return false;
 	Beepers[index].play_once();
 	return true;
+}
+
+Point3D CWVehicle::GetCenterPos() const
+{
+	return MyRef.GetAbsCoord(Model.MyBox.GetCenter());
+}
+
+void CWVehicle::GetBox3D( Box3D& box ) const
+{
+	box = Model.MyBox;
+	box.VisitAllPoint(boost::bind(&CWVehicle::LocalPosToGlobalPos,this,_1));
+}
+
+bool CWVehicle::IsPointInside( const Point3D& pt ) const
+{
+	Box3D box;
+	GetBox3D(box);
+	return box.IsPtInside(pt);
+}
+
+void CWVehicle::LocalPosToGlobalPos( Point3D& pt )const
+{
+	pt = MyRef.GetAbsCoord(pt);
+}
+
+void CWVehicle::CollisionTest()
+{
+	Box3D box;
+	GetBox3D(box);
+	for(vector<CWColladeFeature*>::iterator it = m_ObjectsToCollade.begin(); it != m_ObjectsToCollade.end(); )
+	{
+		if(box.IsPtInside((*it)->GetPos()))
+		{
+			m_CarWorld->remove(*it);
+			++m_MushroomCnt;
+			it = m_ObjectsToCollade.erase(it);
+			continue;
+		}
+		++it;
+	}
+}
+
+void CWVehicle::AddToColladeList( CWColladeFeature* object )
+{
+	m_ObjectsToCollade.push_back(object);
 }
 
 

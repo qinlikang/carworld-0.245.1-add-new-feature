@@ -1,7 +1,7 @@
 #pragma once
-#include "carworldclasses.h"
+#include "ColladeObject.h"
 class CWMushrom :
-	public CWFeature
+	public CWColladeFeature
 {
 public:
 	CWMushrom(void);
@@ -10,6 +10,7 @@ public:
 	virtual void draw_init();
 	virtual void draw();
 
+	Point3D GetPos()const;
 // protected:
 	Ref MyRef;
 	OFFObject* MyMesh;

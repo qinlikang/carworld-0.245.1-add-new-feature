@@ -22,6 +22,7 @@ public:
 	CarWorld(int TimeRefreshRate, const char *LandscapeFile);
 	~CarWorld();
 	void add(CWFeature* AFeature);
+	void remove(const CWFeature* AFeature);
 	void add(CWVehicle* AVehicle);
 	void next_camera();
 	void record();
@@ -40,10 +41,15 @@ public:
 	void fog_down();
 	bool m_fogon;
 
+	void zoom_in();
+	void zoom_out();
+
 public:
 	CWLandscape *m_Landscape;
 	CWCamera *m_Camera; //the current camera
 	CWRecorder *m_Recorder; // the current main recorder
+
+	CWVehicle* m_Vehicle;
 private:
 	CWBackground *m_Background;
 

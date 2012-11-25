@@ -148,6 +148,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Box3D.cpp" />
     <ClCompile Include="..\src\CWBeeper.cpp" />
     <ClCompile Include="..\src\CWMixerManager.cpp" />
     <ClCompile Include="..\src\CWMushrom.cpp" />
@@ -248,6 +249,7 @@
     <ClCompile Include="..\src\WorldBlock.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\Box3D.h" />
     <ClInclude Include="..\src\ColladeObject.h" />
     <ClInclude Include="..\src\CWBeeper.h" />
     <ClInclude Include="..\src\CWMixerManager.h" />

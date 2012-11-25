@@ -4,6 +4,7 @@
 
 #include "CarWorldClasses.h"
 #include "CWBeeper.h"
+#include "ColladeObject.h"
 
 class CWVehicle;
 
@@ -87,7 +88,7 @@ struct CWVehicleState
 	CWCommand m_Command;
 };
 
-class CWVehicle : public CWFeature
+class CWVehicle : public CWFeature, public ColladeObjectInterface
 {
 public:
 	CWVehicle(const char *name);
@@ -113,6 +114,17 @@ public:
 	void SetState(CWVehicleState &state);
 
 	bool Beep(unsigned int index);
+
+	void LocalPosToGlobalPos(Point3D& pt)const;
+
+	// for collision test
+	Point3D GetCenterPos()const;
+	void GetBox3D(Box3D& box)const;
+	bool IsPointInside(const Point3D& pt) const;
+	void CollisionTest();
+
+	// for box
+	void SetShowBox(bool show){m_bShowBox = show;}
 public:
 //read in the configuration file
 	string ModelFile;
@@ -139,6 +151,14 @@ public:
 	vector<CWBeeper> Beepers;
 
 	WorldBlock* LastHitBlock;
+
+	// bonus and punish
+	vector<CWColladeFeature*> m_ObjectsToCollade;
+	void AddToColladeList(CWColladeFeature* object);
+	unsigned int m_MushroomCnt;
+
+	// box
+	bool m_bShowBox;
 };
 
 #endif //__CW_VEHICLE_H_

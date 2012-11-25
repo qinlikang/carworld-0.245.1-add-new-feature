@@ -9,7 +9,6 @@ using namespace std;
 #include "H_Standard.h"
 #include <typeinfo>
 #include <map>
-#include <boost/function.hpp>
 
 class HVariable
 {
@@ -166,19 +165,7 @@ public:
 };
 
 
-class BoostBindCall : public HExecutable
-{
-private:
-	boost::function<void()> m_Callback;
-public:
-	template <class T>
-		BoostBindCall(T& call_back):m_Callback(call_back){}
 
-	virtual void exec(const Command& c)
-	{
-		m_Callback();
-	}
-};
 
 /*template <class T, class Param> class MethodCall1 : public HExecutable
 {

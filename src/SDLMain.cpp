@@ -277,7 +277,14 @@ int main(int argc, char *argv[])
 						app->mouse_motion(event.motion);
 					}
 					break;
-					
+				case SDL_MOUSEBUTTONDOWN:
+					{
+						if(event.button.button==SDL_BUTTON_WHEELDOWN || event.button.button==SDL_BUTTON_WHEELUP)
+						{
+							app->mouse_wheel(event.button);
+						}
+						break;
+					}
 				case SDL_QUIT:
 					done = true;
 					break;

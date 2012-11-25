@@ -257,6 +257,15 @@ Point3D WorldBlock::MyTriangle::GetPointByUV( const double& u,const double& v )
 	return ret;
 }
 
+Point3D WorldBlock::MyTriangle::GetForwardDirection()
+{
+	const Point3D& v0 = (MyWorldBlock->MyOFFVertexes[MyI]).Position;
+	const Point3D& v2 = (MyWorldBlock->MyOFFVertexes[MyI+2]).Position;
+	Point3D ret = v2-v0;
+	ret.normalize();
+	return ret;
+}
+
 istream &operator >> (istream &infile, WorldBlock::MyTriangle &ATriangle)
 {
 	ATriangle.Read(infile);

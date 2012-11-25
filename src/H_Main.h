@@ -92,6 +92,7 @@ public:
 	virtual void resize(unsigned int width, unsigned int height) = 0;
 
 	virtual void mouse_motion(const SDL_MouseMotionEvent& event) = 0;
+	virtual void mouse_wheel(const SDL_MouseButtonEvent& event) = 0;
 
 public:
 //OS specific window

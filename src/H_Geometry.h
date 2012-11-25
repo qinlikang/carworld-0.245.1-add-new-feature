@@ -130,6 +130,19 @@ template <class type> void RotateAround(Point<3,type> &A, Point<3,type> B)
 	}
 }
 
+template <class type> void ScaleBy(Point<3,type> &A, Point<3,type> B)
+{
+	A.x() *= B.x();
+	A.y() *= B.y();
+	A.z() *= B.z();
+}
+
+template <class type> void TranslateBy(Point<3,type> &A, Point<3,type> B)
+{
+	A.x() += B.x();
+	A.y() += B.y();
+	A.z() += B.z();
+}
 typedef Point<2,REAL> Point2D;
 typedef Point<3,REAL> Point3D;
 //#include "Point3D.h"

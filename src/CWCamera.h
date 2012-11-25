@@ -71,6 +71,10 @@ public:
 	virtual void OnMouseDrag(int move_x,int move_y);
 
 	virtual void DrawOnScreen();
+
+	void ZoomIn(){m_radius = REAL(m_radius*0.9);}
+	void ZoomOut(){m_radius = REAL(m_radius*1.1);}
+
 private:
 	CWVehicle *m_Vehicle;
 	REAL m_radius; 
