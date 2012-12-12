@@ -55,8 +55,6 @@ class CWRecordItem
 public:
 	CWRecordItem(double time_elapse):m_TimeElapse(time_elapse){}
 	virtual ~CWRecordItem(){}
-	virtual void write_to_os(std::ostream& os){os<<m_TimeElapse<<endl;}
-
 	double m_TimeElapse; // seconds passed by since start to record
 	typedef CWRecordItem RecorderItemBase;
 };
@@ -72,8 +70,8 @@ public:
 		m_State=pVehicle->GetState();
 	}
 	CWVehicleState m_State;
-	virtual void write_to_os(std::ostream& os);
 };
+typedef boost::shared_ptr<CWRecordItem_VehicleState> CWRecordItem_VehicleStatePtr;
 
 //! Base class of recorder
 /*!
@@ -107,7 +105,7 @@ public:
 	// must implement these
 	virtual void record(){};
 	virtual void replay(){};
-	virtual std::string dump(){return "";}// return the filename
+	virtual std::string dump();// return table created
 	virtual void restore(){};
 	virtual const char* name(){ return "CWRecorder";};
 

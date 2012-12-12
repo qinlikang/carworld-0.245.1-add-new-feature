@@ -7,8 +7,6 @@
 
 #include "MyDatabase.h"
 
-const string CWRecorder::RecordPath="./Records/";
-
 CWRecorder::CWRecorder(RecorderState state)
 	:m_RecorderState(state)
 {
@@ -88,6 +86,36 @@ void CWRecorder::draw_on_screen()
 	glPopMatrix();
 }
 
+std::string CWRecorder::dump()
+{
+	using namespace boost;
+	format day_fmt("%04d/%02d/%02d");
+	format time_fmt("%02d:%02d:%02d");
+	format table_name_fmt("%s_%04d%02d%02d_%02d%02d%02d");
+
+	// get current time
+	time_t raw_time;
+	tm* ptm;
+	time(&raw_time);
+	ptm = localtime(&raw_time);
+
+	day_fmt%(ptm->tm_year+1900)%(ptm->tm_mon+1)%(ptm->tm_mday);
+	time_fmt%(ptm->tm_hour)%(ptm->tm_min)%(ptm->tm_sec);
+	table_name_fmt%name()%(ptm->tm_year+1900)%(ptm->tm_mon+1)%(ptm->tm_mday)%(ptm->tm_hour)%(ptm->tm_min)%(ptm->tm_sec);
+
+	// add a record to RecordSummary table
+	CppSQLite3DB* db = MyDatabase::shared_output_database();
+	if(!db->tableExists("RecordSummary"))
+	{
+		throw HException("RecordSummary does not exist in output database");
+	}
+	format value_fmt("insert into RecordSummary values('%s','%s','%s')");
+	value_fmt%day_fmt.str()%time_fmt.str()%table_name_fmt.str();
+	db->execDML(value_fmt.str().c_str());
+
+	return table_name_fmt.str();
+}
+
 VehicleStateRecorder::VehicleStateRecorder( CWVehicle* pVehicle/*=NULL*/,RecorderState state/*=ERS_Recording*/ )
 	:m_Vehicle(pVehicle),CWRecorder(state)
 {
@@ -119,35 +147,32 @@ void VehicleStateRecorder::replay()
 
 std::string VehicleStateRecorder::dump()
 {
-	boost::format day_fmt("%d/%d/%d);
-	boost::format time_fmt("%d:%d:%d");
+	using namespace boost;
+	string table = RecorderBase::dump();
 	
-	// get current time, use it to format output filename
-	time_t raw_time;
-	tm* ptm;
-	time(&raw_time);
-	ptm = localtime(&raw_time);
-
-	day_fmt%(ptm->tm_year+1900)%(ptm->tm_mon+1)%(ptm->tm_mday);
-	time_fmt%(ptm->tm_hour)%(ptm->tm_min)%(ptm->tm_sec);
-
 	CppSQLite3DB* db = MyDatabase::shared_output_database();
 
-	if(!db->tableExists(name()))
-	{
-		boost::format sql("create table %s (day char(10), time char(10), record_table char(20));");
-
-		db->execDML(sql.str().c_str());
-	}
+	format fmt = format("create table %s (i int, elapsed_time double,x double, y double, z double)")%table;
+	// creat a new record table
+	db->execDML(
+		fmt.str().c_str()
+		);
 
 	// record the stuff
-// 	BOOST_FOREACH(CWRecordItemPtr& p_record,m_Records)
-// 	{
-// 		p_record->write_to_os(record_os);
-// 	}
-// 	record_os.close();
+	unsigned int i=0;
+	BOOST_FOREACH(CWRecordItemPtr& p_record,m_Records)
+	{
+		CWRecordItem_VehicleStatePtr p = static_pointer_cast<CWRecordItem_VehicleState>(p_record);
+		if(p)
+		{
+			Point3D& pos = p->m_State.m_Ref.Position;
+			format fmt = format("insert into %s values(%d, %f, %f, %f, %f)")%table%i%(p->m_TimeElapse)%pos.x()%pos.y()%pos.z();
+			db->execDML(fmt.str().c_str());
+			++i;
+		}
+	}
 
-	return time_str;
+	return table;
 }
 
 void VehicleStateRecorder::restore()
@@ -165,12 +190,4 @@ void VehicleStateRecorder::draw_on_screen()
 	Hgl::WriteText(fmt.str().c_str(), Point2D(-0.25f,-0.75f)); // write the recorder state
 
 	glPopMatrix();
-}
-
-
-
-void CWRecordItem_VehicleState::write_to_os( std::ostream& os )
-{
-	RecorderItemBase::write_to_os(os);
-	os<<m_State.m_Ref.Position<<endl;
 }

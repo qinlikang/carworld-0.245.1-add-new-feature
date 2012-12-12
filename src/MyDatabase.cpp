@@ -55,10 +55,16 @@ CppSQLite3DB* MyDatabase::shared_input_database()
 	return global_in_db.get_db();
 }
 
-CppSQLite3DB* MyDatabase::shared_output_database()
+CppSQLite3DB* MyDatabase::shared_output_database()// used to output records
 {
 	static MyDatabase global_out_db(g_out_database_dir,g_out_database_name,true);
-	return global_out_db.get_db();
+	CppSQLite3DB* db = global_out_db.get_db();
+	if(!db->tableExists("RecordSummary"))
+	{
+		// DATE(YYYY-MM-DD); TIME(HH:MM:SS)
+		db->execDML("create table RecordSummary (date DATE, time TIME, table_name TEXT);");
+	}
+	return db;
 }
 
 MyDatabase::~MyDatabase( void )
