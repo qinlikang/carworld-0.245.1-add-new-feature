@@ -11,6 +11,9 @@
     <Filter Include="CarWorld specific">
       <UniqueIdentifier>{1b996eb3-3778-48e6-9f8d-7e098561f58b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="sqlite">
+      <UniqueIdentifier>{0dc3f9b0-18b2-4c2c-b6de-369afe542ceb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\DXJoystick.cpp">
@@ -102,6 +105,12 @@
     </ClCompile>
     <ClCompile Include="..\src\Box3D.cpp">
       <Filter>Generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sqlite\CppSQLite3.cpp">
+      <Filter>sqlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MyDatabase.cpp">
+      <Filter>sqlite</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -200,6 +209,12 @@
     </ClInclude>
     <ClInclude Include="..\src\Box3D.h">
       <Filter>Generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sqlite\CppSQLite3.h">
+      <Filter>sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\MyDatabase.h">
+      <Filter>sqlite</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

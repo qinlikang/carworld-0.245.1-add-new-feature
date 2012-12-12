@@ -22,6 +22,7 @@
 #include "CWBeeper.h"
 #include "OFFObjectPool.h"
 
+
 HWindow::~HWindow() {}
 HJoystick::~HJoystick(){}
 
@@ -172,6 +173,7 @@ int main(int argc, char *argv[])
 	HglApplication* app = NULL;
 	try
 	{
+
 		bool full_screen = find(argc,argv,"-f")!=argc;
 		HglApplication* app = new CarWorldClient(full_screen);
 

@@ -1,10 +1,11 @@
 #include "CWRecorder.h"
 #include <boost/format.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <ctime>
 #include <cassert>
 #include <fstream>
+
+#include "MyDatabase.h"
 
 const string CWRecorder::RecordPath="./Records/";
 
@@ -118,7 +119,8 @@ void VehicleStateRecorder::replay()
 
 std::string VehicleStateRecorder::dump()
 {
-	boost::format fmt("%d-%d-%d_%d-%d-%d.txt");
+	boost::format day_fmt("%d/%d/%d);
+	boost::format time_fmt("%d:%d:%d");
 	
 	// get current time, use it to format output filename
 	time_t raw_time;
@@ -126,54 +128,26 @@ std::string VehicleStateRecorder::dump()
 	time(&raw_time);
 	ptm = localtime(&raw_time);
 
-	fmt%(ptm->tm_year+1900)%(ptm->tm_mon+1)%(ptm->tm_mday)%(ptm->tm_hour)%(ptm->tm_min)%(ptm->tm_sec);
-	string filename=fmt.str();
+	day_fmt%(ptm->tm_year+1900)%(ptm->tm_mon+1)%(ptm->tm_mday);
+	time_fmt%(ptm->tm_hour)%(ptm->tm_min)%(ptm->tm_sec);
 
-	// use boost.filesystem to keep platform-independce
-	// need compile the boost.filesystem to get the static lib.
-	using namespace boost::filesystem;
-	path record_path(RecorderBase::RecordPath + name());
+	CppSQLite3DB* db = MyDatabase::shared_output_database();
 
-	try
+	if(!db->tableExists(name()))
 	{
-		if(!exists(record_path))
-		{
-			// create the folder
-			create_directories(record_path);
-		}
-		else if(!is_directory(record_path))
-		{
-			// delete the file, and create the folder
-			remove_all(record_path);
-			create_directories(record_path);
-		}
-	}
-	catch(...)
-	{
-		cout<<"FAILED In "<<__FILE__<<"("<<__LINE__<<")"<<endl;
-		cout<<"Cannot make directory for records file: "<<record_path<<endl;
-		return "";
-	}
+		boost::format sql("create table %s (day char(10), time char(10), record_table char(20));");
 
-	if(!portable_name(filename))
-	{
-		cout<<"FAILED In "<<__FILE__<<"("<<__LINE__<<")"<<endl;
-		cout<<"not portable file name: "<<filename.c_str()<<endl;
-		return "";
+		db->execDML(sql.str().c_str());
 	}
-
-	record_path.append(filename.begin(),filename.end());
-
-	std::ofstream record_os(record_path.c_str());
 
 	// record the stuff
-	BOOST_FOREACH(CWRecordItemPtr& p_record,m_Records)
-	{
-		p_record->write_to_os(record_os);
-	}
-	record_os.close();
+// 	BOOST_FOREACH(CWRecordItemPtr& p_record,m_Records)
+// 	{
+// 		p_record->write_to_os(record_os);
+// 	}
+// 	record_os.close();
 
-	return record_path.string();
+	return time_str;
 }
 
 void VehicleStateRecorder::restore()

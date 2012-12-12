@@ -132,8 +132,7 @@ void CarWorldClient::draw_init()
 	cout << endl;
 
 	// set up the off pool and load off files
-	OFFObjectPool::sharedOFFPool()->loadOneFromFile("data/Landscape/mushroom.off","mushroom");
-	OFFObjectPool::sharedOFFPool()->loadOneFromFile("data/Landscape/cone.off","cone");
+	OFFObjectPool::sharedOFFPool()->loadOffs();
 
 	m_CarWorld->draw_init();
 

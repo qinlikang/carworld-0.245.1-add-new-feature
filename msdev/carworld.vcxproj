@@ -122,14 +122,14 @@
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalIncludeDirectories>C:\Users\labuser\Documents\Visual Studio 2010\Projects\DevEnv\boost_1_49_0\stage;..\..\DevEnv\SDL-1.2.15\include;..\..\DevEnv\SDL_image-1.2.12\include;..\..\DevEnv\boost_1_49_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\labuser\Documents\Visual Studio 2010\Projects\DevEnv\boost_1_49_0\stage;..\..\DevEnv\SDL-1.2.15\include;..\..\DevEnv\SDL_image-1.2.12\include;..\..\DevEnv\boost_1_49_0;..\src\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x040c</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;ws2_32.lib;SDL_image.lib;SDL.lib;SDLmain.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sqlite3.lib;opengl32.lib;glu32.lib;ws2_32.lib;SDL_image.lib;SDL.lib;SDLmain.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>../carworld.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -140,7 +140,7 @@
       <DataExecutionPrevention>
       </DataExecutionPrevention>
       <TargetMachine>MachineX86</TargetMachine>
-      <AdditionalLibraryDirectories>..\..\DevEnv\SDL-1.2.15\lib\x86;..\..\DevEnv\SDL_image-1.2.12\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\..\DevEnv\SDL-1.2.15\lib\x86;..\..\DevEnv\SDL_image-1.2.12\lib\x86;..\src\sqlite;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Bscmake>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -165,6 +165,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\src\MyDatabase.cpp" />
     <ClCompile Include="..\src\OFFObjectPool.cpp" />
     <ClCompile Include="..\src\SDLJoystick.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -242,6 +243,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\src\sqlite\CppSQLite3.cpp" />
     <ClCompile Include="..\src\Tacho.cpp">
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -258,6 +260,7 @@
     <ClInclude Include="..\src\DXJoystick.h" />
     <ClInclude Include="..\src\H_Main.h" />
     <ClInclude Include="..\src\H_Singleton.h" />
+    <ClInclude Include="..\src\MyDatabase.h" />
     <ClInclude Include="..\src\OFFObjectPool.h" />
     <ClInclude Include="..\src\SDLJoystick.h" />
     <ClInclude Include="..\src\automat.h" />
@@ -279,6 +282,7 @@
     <ClInclude Include="..\src\CWCamera.h" />
     <ClInclude Include="..\src\CWVehicle.h" />
     <ClInclude Include="..\src\CWVersion.h" />
+    <ClInclude Include="..\src\sqlite\CppSQLite3.h" />
     <ClInclude Include="..\src\Tacho.h" />
     <ClInclude Include="..\src\WorldBlock.h" />
   </ItemGroup>
