@@ -4,7 +4,7 @@
 #include <ctime>
 #include <cassert>
 #include <fstream>
-
+#include "H_Main.h"
 #include "MyDatabase.h"
 
 CWRecorder::CWRecorder(RecorderState state)
@@ -119,7 +119,6 @@ std::string CWRecorder::dump()
 VehicleStateRecorder::VehicleStateRecorder( CWVehicle* pVehicle/*=NULL*/,RecorderState state/*=ERS_Recording*/ )
 	:m_Vehicle(pVehicle),CWRecorder(state)
 {
-	m_Cursor=m_Records.begin();
 }
 
 void VehicleStateRecorder::record()
@@ -132,7 +131,7 @@ void VehicleStateRecorder::record()
 
 	double elapse_time = double(m_Timer.get_elapse_clocks())/CLOCKS_PER_SEC;
 
-	m_Records.push_back(CWRecordItemPtr(new CWRecordItem_VehicleState(m_Vehicle,elapse_time)));
+	m_Records.push_back(BaseItemPtrT(new CWRecordItem_VehicleState(m_Vehicle,elapse_time)));
 	m_Cursor=m_Records.end();
 }
 
@@ -148,7 +147,7 @@ void VehicleStateRecorder::replay()
 std::string VehicleStateRecorder::dump()
 {
 	using namespace boost;
-	string table = RecorderBase::dump();
+	string table = BaseT::dump();
 	
 	CppSQLite3DB* db = MyDatabase::shared_output_database();
 
@@ -160,9 +159,9 @@ std::string VehicleStateRecorder::dump()
 
 	// record the stuff
 	unsigned int i=0;
-	BOOST_FOREACH(CWRecordItemPtr& p_record,m_Records)
+	BOOST_FOREACH(BaseItemPtrT& p_record,m_Records)
 	{
-		CWRecordItem_VehicleStatePtr p = static_pointer_cast<CWRecordItem_VehicleState>(p_record);
+		ItemPtrT p = static_pointer_cast<ItemT>(p_record);
 		if(p)
 		{
 			Point3D& pos = p->m_State.m_Ref.Position;
@@ -182,7 +181,7 @@ void VehicleStateRecorder::restore()
 
 void VehicleStateRecorder::draw_on_screen()
 {
-	RecorderBase::draw_on_screen();
+	BaseT::draw_on_screen();
 	glPushMatrix();
 
 	boost::format fmt("%d");
@@ -190,4 +189,78 @@ void VehicleStateRecorder::draw_on_screen()
 	Hgl::WriteText(fmt.str().c_str(), Point2D(-0.25f,-0.75f)); // write the recorder state
 
 	glPopMatrix();
+}
+
+CWRecordItem_KeyboardInput::CWRecordItem_KeyboardInput( HWindow* hwindow,double time_elapse ) : CWRecordItem(time_elapse)
+{
+	upPressed = hwindow->IsPressed(SDLK_UP);
+	downPressed = hwindow->IsPressed(SDLK_DOWN);
+	leftPressed = hwindow->IsPressed(SDLK_LEFT);
+	rightPressed = hwindow->IsPressed(SDLK_RIGHT);
+	spacePressed = hwindow->IsPressed(SDLK_SPACE);
+}
+
+KeyboardInputRecorder::KeyboardInputRecorder( HWindow* hwindow,RecorderState state/*=ERS_Record*/ )
+	: BaseT(state)
+	, m_hWindow(hwindow)
+{}
+
+void KeyboardInputRecorder::draw_on_screen()
+{
+
+}
+
+void KeyboardInputRecorder::restore()
+{
+
+}
+
+std::string KeyboardInputRecorder::dump()
+{
+	using namespace boost;
+	string table = BaseT::dump();
+
+	CppSQLite3DB* db = MyDatabase::shared_output_database();
+
+	format fmt = format("create table %s (i int, elapsed_time double,up_pressed int, down_pressed int, left_pressed int, right_pressed int, space_pressed int)")%table;
+	// creat a new record table
+	db->execDML(
+		fmt.str().c_str()
+		);
+
+	// record the stuff
+	unsigned int i=0;
+	BOOST_FOREACH(BaseItemPtrT& p_record,m_Records)
+	{
+		ItemPtrT p = static_pointer_cast<ItemT>(p_record);
+		if(p)
+		{
+			format fmt = format("insert into %s values(%d, %f, %d, %d, %d, %d, %d)")%table%i%(p->m_TimeElapse)
+				%int(p->upPressed)%int(p->downPressed)%int(p->leftPressed)%int(p->rightPressed)%int(p->spacePressed);
+			db->execDML(fmt.str().c_str());
+			++i;
+		}
+	}
+
+	return table;
+
+}
+
+void KeyboardInputRecorder::replay()
+{
+
+}
+
+void KeyboardInputRecorder::record()
+{
+	if(!m_hWindow) return;
+	if(m_Records.empty())
+	{
+		reset();
+	}
+
+	double elapse_time = double(m_Timer.get_elapse_clocks())/CLOCKS_PER_SEC;
+
+	m_Records.push_back(BaseItemPtrT(new ItemT(m_hWindow,elapse_time)));
+	m_Cursor=m_Records.end();
 }

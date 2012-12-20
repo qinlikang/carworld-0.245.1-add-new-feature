@@ -4,11 +4,13 @@
 #include <stdio.h>
 #include <sstream>
 #include "CWMushrom.h"
+#include "H_Main.h"
+
+#define FOR_ALL_RECORDERS for(std::map<const char*, CWRecorder*>::iterator it = m_Recorders.begin(); it!=m_Recorders.end();++it)
 //CLASS CarWorld:
 CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
 						m_Landscape(new CWLandscape(LandscapeFile)),
 						m_Camera(new FixCam()),
-						m_Recorder(NULL),
 						m_Background(new CWBackground()),
 						RealTime(0),
 						Frames(0),
@@ -49,7 +51,7 @@ void CarWorld::add(CWVehicle* AVehicle)
 {
 	add((CWFeature*)AVehicle);
 	add(m_Camera = new InCarCam(AVehicle));
-	add(m_Recorder = new VehicleStateRecorder(AVehicle));
+	add(m_Recorders["vehicle"] = new VehicleStateRecorder(AVehicle));
 
 	add(new FreeCam(AVehicle));
 	add(new FixCam(AVehicle));
@@ -108,7 +110,7 @@ void CarWorld::update(int ElapsedTimeMs)
 
 	for (int i=0 ; i<NbTimeClicksPerFrame ; i++)
 	{
-		if(m_Recorder!=NULL&&m_Recorder->is_replay_and_finished()) return;
+		if(m_Recorders["vehicle"]!=NULL&&m_Recorders["vehicle"]->is_replay_and_finished()) return;
 		for (list<CWFeature*>::iterator I=m_Features.begin() ; I!=m_Features.end() ; I++)
 			(*I)->update();	
 	}
@@ -181,8 +183,8 @@ void CarWorld::DrawOnScreen()
 	//draw car info
 	m_Camera->DrawOnScreen();
 	//draw recorder info
-	if(m_Recorder!=NULL)
-		m_Recorder->draw_on_screen();
+	if(m_Recorders["vehicle"]!=NULL)
+		m_Recorders["vehicle"]->draw_on_screen();
 
 	// test for u,v
 	WorldBlock::MyTriangle* pTri;
@@ -230,27 +232,51 @@ void CarWorld::DrawOnScreen()
 
 void CarWorld::record()
 {
-	m_Recorder->set_state(CWRecorder::ERS_Record);
+	FOR_ALL_RECORDERS
+	{
+		CWRecorder* R = it->second;
+		R->set_state(CWRecorder::ERS_Record);
+	}
 }
 
 void CarWorld::replay()
 {
-	m_Recorder->set_state(CWRecorder::ERS_Replay);
+	FOR_ALL_RECORDERS
+	{
+		CWRecorder* R = it->second;
+		R->set_state(CWRecorder::ERS_Replay);
+	}
 }
 
 void CarWorld::off_recorder()
 {
-	m_Recorder->m_strOtherMsg= "FileSaved In: "+m_Recorder->dump();
-	m_Recorder->set_state(CWRecorder::ERS_OFF);
+	m_Recorders["vehicle"]->m_strOtherMsg= "FileSaved!! ";
+	FOR_ALL_RECORDERS
+	{
+		CWRecorder* R = it->second;
+		R->dump();
+		R->set_state(CWRecorder::ERS_OFF);
+	}
 }
 
 void CarWorld::pause_recorder_timer( bool pause/*=true*/ )
 {
 	if(pause)
-		m_Recorder->m_Timer.pause();
+	{
+		FOR_ALL_RECORDERS
+		{
+			CWRecorder* R = it->second;
+			R->m_Timer.pause();
+		}
+	}
 	else
-		m_Recorder->m_Timer.resume();
-}
+	{
+		FOR_ALL_RECORDERS
+		{
+			CWRecorder* R = it->second;
+			R->m_Timer.resume();
+		}
+	}}
 
 void CarWorld::zoom_in()
 {
@@ -281,4 +307,10 @@ void CarWorld::remove( const CWFeature* AFeature )
 			return;
 		}
 	}
+}
+
+
+void CarWorld::addKeyboardRecorder( const char* recorder_name,HWindow* hwindow )
+{
+	add(m_Recorders[recorder_name] = new KeyboardInputRecorder(hwindow));
 }

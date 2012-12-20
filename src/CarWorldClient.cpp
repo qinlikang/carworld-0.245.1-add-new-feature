@@ -134,6 +134,7 @@ void CarWorldClient::draw_init()
 	// set up the off pool and load off files
 	OFFObjectPool::sharedOFFPool()->loadOffs();
 
+	m_CarWorld->addKeyboardRecorder("key_recorder",m_window);
 	m_CarWorld->draw_init();
 
 	Hgl::ThrowError(); //check to see if everything is OK

@@ -15,13 +15,14 @@
 //World caracteristics:
 #define INIT_TIME_INCREMENT 0.0001f
 #define MIN_TIME_CLICKS_SEC 40.0
-
+class HWindow;
 class CarWorld
 {
 public:
 	CarWorld(int TimeRefreshRate, const char *LandscapeFile);
 	~CarWorld();
 	void add(CWFeature* AFeature);
+	void addKeyboardRecorder(const char* recorder_name,HWindow* hwindow);
 	void remove(const CWFeature* AFeature);
 	void add(CWVehicle* AVehicle);
 	void next_camera();
@@ -47,7 +48,7 @@ public:
 public:
 	CWLandscape *m_Landscape;
 	CWCamera *m_Camera; //the current camera
-	CWRecorder *m_Recorder; // the current main recorder
+	std::map<const char*,CWRecorder*> m_Recorders;
 
 	CWVehicle* m_Vehicle;
 private:

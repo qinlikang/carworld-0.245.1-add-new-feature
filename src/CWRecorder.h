@@ -56,22 +56,9 @@ public:
 	CWRecordItem(double time_elapse):m_TimeElapse(time_elapse){}
 	virtual ~CWRecordItem(){}
 	double m_TimeElapse; // seconds passed by since start to record
-	typedef CWRecordItem RecorderItemBase;
+	typedef CWRecordItem BaseT;
 };
-typedef boost::shared_ptr<CWRecordItem> CWRecordItemPtr;
 
-//! the Vehicle State record item
-class CWRecordItem_VehicleState: public CWRecordItem
-{
-public:
-	CWRecordItem_VehicleState(CWVehicle* pVehicle,double time_elapse)
-		: CWRecordItem(time_elapse)
-	{
-		m_State=pVehicle->GetState();
-	}
-	CWVehicleState m_State;
-};
-typedef boost::shared_ptr<CWRecordItem_VehicleState> CWRecordItem_VehicleStatePtr;
 
 //! Base class of recorder
 /*!
@@ -81,6 +68,10 @@ class CWRecorder :
 	public CWFeature
 {
 public:
+	typedef boost::shared_ptr<CWRecordItem> BaseItemPtrT;
+	typedef CWRecordItem BaseItemT;
+	typedef CWRecorder BaseT;
+
 	enum RecorderState
 	{
 		ERS_Record,
@@ -90,8 +81,6 @@ public:
 
 	CWRecorder(RecorderState state);
 	virtual ~CWRecorder(void);
-
-	typedef CWRecorder RecorderBase;
 
 	// no need to implement
 	virtual void reset();
@@ -118,15 +107,30 @@ public:
 	string m_strOtherMsg;// other msg about recorder that will print onto screen
 protected:
 	RecorderState m_RecorderState;
-	std::vector<CWRecordItemPtr> m_Records;
-	std::vector<CWRecordItemPtr>::iterator m_Cursor;
+	std::vector<BaseItemPtrT> m_Records;
+	std::vector<BaseItemPtrT>::iterator m_Cursor;
+};
+
+////////////////////////////////////////////////////////////////////////// Vehicle State Recorder
+//! the Vehicle State record item
+class CWRecordItem_VehicleState: public CWRecordItem
+{
+public:
+	CWRecordItem_VehicleState(CWVehicle* pVehicle,double time_elapse)
+		: CWRecordItem(time_elapse)
+	{
+		m_State=pVehicle->GetState();
+	}
+	CWVehicleState m_State;
 };
 
 //! the Vehicle State Recorder
 class VehicleStateRecorder : public CWRecorder
 {
-
 public:
+	typedef CWRecordItem_VehicleState ItemT;
+	typedef boost::shared_ptr<CWRecordItem_VehicleState> ItemPtrT;
+
 	VehicleStateRecorder(CWVehicle* pVehicle=NULL,RecorderState state=ERS_Record);
 
 	virtual void record();
@@ -139,7 +143,41 @@ public:
 private:
 	CWVehicle* m_Vehicle;
 };
+////////////////////////////////////////////////////////////////////////// KeyboardInput Recorder
+class HWindow;
+//! the KeyboardInput record item
+class CWRecordItem_KeyboardInput: public CWRecordItem
+{
+public:
+	CWRecordItem_KeyboardInput(HWindow* hwindow,double time_elapse);
 
+	bool upPressed;
+	bool downPressed;
+	bool leftPressed;
+	bool rightPressed;
+	bool spacePressed;
+};
+
+//! the KeyboardInput Recorder
+class KeyboardInputRecorder : public CWRecorder
+{
+public:
+	typedef CWRecordItem_KeyboardInput ItemT;
+	typedef boost::shared_ptr<CWRecordItem_KeyboardInput> ItemPtrT;
+
+	KeyboardInputRecorder(HWindow* hwindow,RecorderState state=ERS_Record);
+
+	virtual void record();
+	virtual void replay();
+	virtual std::string dump();
+	virtual void restore();
+	virtual const char* name(){return "UserInputRecorder";}
+
+	virtual void draw_on_screen();
+private:
+	HWindow* m_hWindow;
+
+};
 
 
 
