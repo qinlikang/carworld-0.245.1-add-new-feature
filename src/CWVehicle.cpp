@@ -6,6 +6,7 @@
 #include "H_Variable.h"
 #include "H_XML.h"
 #include <boost/bind.hpp>
+#include "CWBeeper.h"
 
 //CLASS CWCommand
 CWCommand::CWCommand() : GasBrake(0), Steer(0), SteerFeedBack(0), HandBrake(false)
@@ -178,7 +179,7 @@ void Wheel::draw()
 
 //CLASS CWVehicle:
 CWVehicle::CWVehicle(const char *name)
-	: m_MushroomCnt(0),m_bShowBox(false)
+	: m_MushroomCnt(0),m_bShowBox(false),m_ConeCnt(0)
 {
 	MyDriveTrain = DriveTrain(RedLine, MaxTorque);
 	MyRef = InertRef(Mass, MassDistrib);
@@ -222,9 +223,11 @@ void CWVehicle::load(const char *name)
 	DescribeWheel["SteerFactor"] =			new HVar<REAL>("SteerFactor",&(W.SteerFactor));
 	DescribeWheel["LockUp"] =				new HVar<bool>("LockUp",&(W.LockUp));
 
-	string B;
+	CWBeeper BP;
 	map<string,HVariable*> DescribeBeeper;
-	DescribeBeeper["SoundFile"] =			new HVar<string>("SoundFile",&B);
+	DescribeBeeper["BeeperName"] =			new HVar<string>("BeeperName",&(BP.BeeperName));
+	DescribeBeeper["SoundFile"] =			new HVar<string>("SoundFile",&(BP.Filename));
+	DescribeBeeper["DefaultKeyBind"] =			new HVar<string>("DefaultKeyBind",&(BP.Keybinding));
 
 
 	XmlTag tag;
@@ -250,9 +253,9 @@ void CWVehicle::load(const char *name)
 				}
 				if (tag.name()== "CWBeeper")
 				{
-					B = string();
+					BP = CWBeeper();
 					tag.write_to(DescribeBeeper);
-					BeeperFiles.push_back(B);
+					Beepers.push_back(BP);
 				}
 			}
 		default:;
@@ -351,11 +354,9 @@ void CWVehicle::draw_init()
 		(*I).draw_init();
 	}
 	
-	for(vector<string>::iterator I = BeeperFiles.begin(); I!= BeeperFiles.end(); ++I)
+	for(vector<CWBeeper>::iterator I = Beepers.begin(); I!= Beepers.end(); ++I)
 	{
-		CWBeeper B;
-		B.load_wav_file(*I);
-		Beepers.push_back(B);
+		I->init();
 	}
 }
 
@@ -424,6 +425,7 @@ bool CWVehicle::is_vehicle_out_of_road()
 		if(tmp.Found)
 			return false;
 	}
+	AudioPlayer::shared_audio()->get_sound("Fall")->play_once();
 	return true;
 }
 
@@ -459,13 +461,6 @@ void CWVehicle::reset_to_fall_block()
 		reset();
 }
 
-bool CWVehicle::Beep( unsigned int index )
-{
-	if(index>=Beepers.size()) return false;
-	Beepers[index].play_once();
-	return true;
-}
-
 Point3D CWVehicle::GetCenterPos() const
 {
 	return MyRef.GetAbsCoord(Model.MyBox.GetCenter());
@@ -497,8 +492,18 @@ void CWVehicle::CollisionTest()
 	{
 		if(box.IsPtInside((*it)->GetPos()))
 		{
+			if((*it)->GetTag()==ECT_MUSHROOM)
+			{
+				++m_MushroomCnt;
+				AudioPlayer::shared_audio()->get_sound("HitMushroom")->play_once();
+			}
+			else if((*it)->GetTag()==ECT_CONE)
+			{
+				++m_ConeCnt;
+				AudioPlayer::shared_audio()->get_sound("HitCone")->play_once();
+			}
+
 			m_CarWorld->remove(*it);
-			++m_MushroomCnt;
 			it = m_ObjectsToCollade.erase(it);
 			continue;
 		}

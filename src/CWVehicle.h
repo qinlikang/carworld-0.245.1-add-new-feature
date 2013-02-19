@@ -113,8 +113,6 @@ public:
 	CWVehicleState GetState();
 	void SetState(CWVehicleState &state);
 
-	bool Beep(unsigned int index);
-
 	void LocalPosToGlobalPos(Point3D& pt)const;
 
 	// for collision test
@@ -147,7 +145,6 @@ public:
 	InertRef MyRef;
 	vector<Wheel> Wheels;
 	OFFObject Model;
-	vector<string> BeeperFiles;
 	vector<CWBeeper> Beepers;
 
 	WorldBlock* LastHitBlock;
@@ -156,6 +153,7 @@ public:
 	vector<CWColladeFeature*> m_ObjectsToCollade;
 	void AddToColladeList(CWColladeFeature* object);
 	unsigned int m_MushroomCnt;
+	unsigned int m_ConeCnt;
 
 	// box
 	bool m_bShowBox;

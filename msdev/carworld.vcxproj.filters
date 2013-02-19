@@ -112,6 +112,9 @@
     <ClCompile Include="..\src\MyDatabase.cpp">
       <Filter>sqlite</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\CWCone.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\DXJoystick.h">
@@ -215,6 +218,9 @@
     </ClInclude>
     <ClInclude Include="..\src\MyDatabase.h">
       <Filter>sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CWCone.h">
+      <Filter>CarWorld specific</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

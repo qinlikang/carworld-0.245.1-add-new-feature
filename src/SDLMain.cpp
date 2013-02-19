@@ -231,15 +231,8 @@ int main(int argc, char *argv[])
 		app->resize(screen->w, screen->h);
 
 		//load the chunks
-		CWBeeper music;
-		if(music.load_wav_file("data/Sounds/song.wav"))
-		{
-			music.play_n_times(-1);
-		}
-		else
-		{
-			cout<<"loading music error"<<endl;
-		}
+		AudioPlayer::shared_audio()->load_from_db();
+		AudioPlayer::shared_audio()->get_sound("Background")->play_n_times(-1);
 
 		
 		bool done = false;
@@ -301,6 +294,7 @@ int main(int argc, char *argv[])
 		delete app;
 		app = NULL;
 		cout.rdbuf(cout_streambuf);
+		AudioPlayer::release_audio();
 		GetMixer().Quit();
 		SDL_Quit();
 		return 0;

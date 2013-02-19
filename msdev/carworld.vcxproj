@@ -150,6 +150,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\Box3D.cpp" />
     <ClCompile Include="..\src\CWBeeper.cpp" />
+    <ClCompile Include="..\src\CWCone.cpp" />
     <ClCompile Include="..\src\CWMixerManager.cpp" />
     <ClCompile Include="..\src\CWMushrom.cpp" />
     <ClCompile Include="..\src\CWRecorder.cpp" />
@@ -254,6 +255,7 @@
     <ClInclude Include="..\src\Box3D.h" />
     <ClInclude Include="..\src\ColladeObject.h" />
     <ClInclude Include="..\src\CWBeeper.h" />
+    <ClInclude Include="..\src\CWCone.h" />
     <ClInclude Include="..\src\CWMixerManager.h" />
     <ClInclude Include="..\src\CWMushrom.h" />
     <ClInclude Include="..\src\CWRecorder.h" />

@@ -82,9 +82,13 @@
 		LockUp="1">
 	</CWWheel>
 	<CWBeeper
-		SoundFile="data/Sounds/Beeper1.wav">
+		BeeperName="Beeper1"
+		DefaultKeyBind="1"
+		SoundFile="data/Vehicles/Beeper1.wav">
 	</CWBeeper>
 	<CWBeeper
-		SoundFile="data/Sounds/Beeper2.wav">
+		BeeperName="Beeper2"
+		DefaultKeyBind="2"
+		SoundFile="data/Vehicles/Beeper2.wav">
 	</CWBeeper>
 </CWVehicle>
