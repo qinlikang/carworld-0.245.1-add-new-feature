@@ -73,7 +73,7 @@ private:
 	int ID;
 	void SendState();
 	bool RecieveState();
-	void AddMushrooms( CarWorld * m_CarWorld );
+	void AddColladeObjs( CarWorld * m_CarWorld );
 	map<int,CWVehicle*> m_Opponents;
 //CarWorld
 	CWVehicle *m_Vehicle;

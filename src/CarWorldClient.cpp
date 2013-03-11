@@ -14,6 +14,7 @@
 #include "CWCone.h"
 #include "OFFObjectPool.h"
 #include "CWBeeper.h"
+#include "MyDatabase.h"
 
 #define CLIENT_TIMEOUT 200
 
@@ -120,7 +121,7 @@ CarWorldClient::CarWorldClient(bool full_screen) :
 	m_CarWorld->add(m_Vehicle);
 
 
-	AddMushrooms(m_CarWorld);
+	AddColladeObjs(m_CarWorld);
 
 }
 
@@ -227,7 +228,7 @@ void CarWorldClient::draw_init()
 	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Rotate(Point3D(-PI/2,0,0));
 
 	OFFObjectPool::sharedOFFPool()->getMesh("cone")->Scale(Point3D(0.01f,0.01f,0.01f));
-	OFFObjectPool::sharedOFFPool()->getMesh("cone")->Translate(Point3D(-1.0f,-1.f,0.f));
+	OFFObjectPool::sharedOFFPool()->getMesh("cone")->Translate(Point3D(-1.0f,-0.3f,0.f));
 	OFFObjectPool::sharedOFFPool()->getMesh("cone")->Rotate(Point3D(-PI/2,0,0));
 
 }
@@ -536,23 +537,58 @@ void CarWorldClient::mouse_wheel( const SDL_MouseButtonEvent& event )
 	}
 }
 
-void CarWorldClient::AddMushrooms( CarWorld * m_CarWorld )
+void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 {
-	CWLandscape* landscape = m_CarWorld->m_Landscape;
-	for(list<WorldBlock>::iterator it = landscape->MyWorldBlocks.begin(); it != landscape->MyWorldBlocks.end(); ++it)
-	{
-// 		CWMushrom* pMushroom = new CWMushrom;
-// 		pMushroom->MyRef.Position = it->Triangles[0].GetPointByUV(0,0) + Point3D(0,0,1);
-// 		pMushroom->MyRef.Y = it->Triangles[0].GetForwardDirection();
-// 		pMushroom->MyRef.X = pMushroom->MyRef.Y ^ pMushroom->MyRef.Z;
-// 		m_CarWorld->add(pMushroom);
-// 		m_Vehicle->AddToColladeList(pMushroom);
+// 	ofstream fs("Refs.txt");
+// 	CWLandscape* landscape = m_CarWorld->m_Landscape;
+// 	for(list<WorldBlock>::iterator it = landscape->MyWorldBlocks.begin(); it != landscape->MyWorldBlocks.end(); ++it)
+// 	{
+// // 		CWMushrom* pMushroom = new CWMushrom;
+// // 		pMushroom->MyRef.Position = it->Triangles[0].GetPointByUV(0,0) + Point3D(0,0,1);
+// // 		pMushroom->MyRef.Y = it->Triangles[0].GetForwardDirection();
+// // 		pMushroom->MyRef.X = pMushroom->MyRef.Y ^ pMushroom->MyRef.Z;
+// // 		m_CarWorld->add(pMushroom);
+// // 		m_Vehicle->AddToColladeList(pMushroom);
+// 
+// 		CWCone* pCone = new CWCone;
+// 		pCone->MyRef.Position = it->Triangles[0].GetPointByUV(0,0)+ Point3D(0,0,1);
+// 		pCone->MyRef.Y = it->Triangles[0].GetForwardDirection();
+// 		pCone->MyRef.X = pCone->MyRef.Y ^ pCone->MyRef.Z;
+// 
+// 		fs<<pCone->MyRef.Position<<endl;
+// 		fs<<pCone->MyRef.Y<<endl;
+// 		fs<<pCone->MyRef.X<<endl;
+// 		fs<<endl;
+// 		m_CarWorld->add(pCone);
+// 		m_Vehicle->AddToColladeList(pCone);
+// 	}
+// 	fs.close();
+	CppSQLite3Query q = MyDatabase::shared_input_database()->execQuery("select * from ColladeObjPosition;");
 
-		CWCone* pCone = new CWCone;
-		pCone->MyRef.Position = it->Triangles[0].GetPointByUV(0,0) + Point3D(0,0,0.5);
-		pCone->MyRef.Y = it->Triangles[0].GetForwardDirection();
-		pCone->MyRef.X = pCone->MyRef.Y ^ pCone->MyRef.Z;
-		m_CarWorld->add(pCone);
-		m_Vehicle->AddToColladeList(pCone);
+	while(!q.eof())
+	{
+		if(q.fieldValue("tag")==string("cone"))
+		{
+			CWCone* pObj = new CWCone;
+			pObj->MyRef.Position = Point3D(q.getFloatField("x"),q.getFloatField("y"),q.getFloatField("z"));
+			pObj->MyRef.Y = Point3D(q.getFloatField("forwardx"),q.getFloatField("forwardy"),q.getFloatField("forwardz"));
+			pObj->MyRef.X = Point3D(q.getFloatField("rightx"),q.getFloatField("righty"),q.getFloatField("rightz"));
+
+			m_CarWorld->add(pObj);
+			m_Vehicle->AddToColladeList(pObj);		
+		}
+		else if(q.fieldValue("tag")==string("mushroom"))
+		{
+			CWMushrom* pObj = new CWMushrom;
+			pObj->MyRef.Position = Point3D(q.getFloatField("x"),q.getFloatField("y"),q.getFloatField("z"));
+			pObj->MyRef.Y = Point3D(q.getFloatField("forwardx"),q.getFloatField("forwardy"),q.getFloatField("forwardz"));
+			pObj->MyRef.X = Point3D(q.getFloatField("rightx"),q.getFloatField("righty"),q.getFloatField("rightz"));
+
+			m_CarWorld->add(pObj);
+			m_Vehicle->AddToColladeList(pObj);		
+		}
+
+
+		q.nextRow();
 	}
 }
