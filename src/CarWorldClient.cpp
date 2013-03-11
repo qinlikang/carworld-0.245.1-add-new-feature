@@ -563,7 +563,7 @@ void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 // 		m_Vehicle->AddToColladeList(pCone);
 // 	}
 // 	fs.close();
-	CppSQLite3Query q = MyDatabase::shared_input_database()->execQuery("select * from ColladeObjPosition;");
+	CppSQLite3Query q = MyDatabase::shared_input_database()->execQuery("select * from CollideObjPosition;");
 
 	while(!q.eof())
 	{

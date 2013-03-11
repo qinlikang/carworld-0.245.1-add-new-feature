@@ -39,13 +39,16 @@ for line in PosFile.readlines():
 conn = sqlite3.connect('./carworld.db')
 curs = conn.cursor()
 # judge if the table exist
-curs.execute('drop table ColladeObjPosition')
-curs.execute('create table ColladeObjPosition (tag text,x float, y float, z float, forwardx float,forwardy float, forwardz float, rightx float, righty float, rightz float)')
+try:
+    curs.execute('drop table CollideObjPosition')
+except:
+    pass
+curs.execute('create table CollideObjPosition (tag text,x float, y float, z float, forwardx float,forwardy float, forwardz float, rightx float, righty float, rightz float)')
 
 count=0
 for obj in ObjPoses:
     count=count+1
-    sql = 'insert into ColladeObjPosition values(%s, %f,%f,%f, %f,%f,%f, %f,%f,%f)'
+    sql = 'insert into CollideObjPosition values(%s, %f,%f,%f, %f,%f,%f, %f,%f,%f)'
     if count%2==0:
         curs.execute(sql %('"cone"',obj.pos.x,obj.pos.y,obj.pos.z,obj.forward.x,obj.forward.y,obj.forward.z,obj.right.x,obj.right.y,obj.right.z))
     else:
