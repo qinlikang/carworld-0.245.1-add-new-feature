@@ -80,6 +80,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Box3D.cpp" />
     <ClCompile Include="..\src\H_Geometry.cpp" />
     <ClCompile Include="..\src\H_Graphics.cpp" />
     <ClCompile Include="..\src\H_Keys.cpp" />
@@ -94,6 +95,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\automat.h" />
+    <ClInclude Include="..\src\Box3D.h" />
     <ClInclude Include="..\src\H_Geometry.h" />
     <ClInclude Include="..\src\H_Graphics.h" />
     <ClInclude Include="..\src\H_Keys.h" />
