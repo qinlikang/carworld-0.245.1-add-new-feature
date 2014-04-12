@@ -6,7 +6,7 @@
 #include "CWBeeper.h"
 #include "NirsTrigger.h"
 #include "Brain.h"
-#include "ColladeObject.h"
+#include "CollideObject.h"
 #include <fstream>
 #include <vector>
 class CWVehicle;
@@ -102,7 +102,7 @@ struct CDistractor
 	string str;
 	int duration; // 0 music no meaning, but text will disappear later
 };
-class CWVehicle : public CWFeature, public ColladeObjectInterface
+class CWVehicle : public CWFeature, public CollideObjectInterface
 {
 public:
 	CWVehicle(const char *name);
@@ -134,6 +134,7 @@ public:
 	void GetBox3D(Box3D& box)const;
 	bool IsPointInside(const Point3D& pt) const;
 	void CollisionTest();
+	bool bFakeCar;// if set true, we only draw wheels, and not do collision
 
 	// for box
 	void SetShowBox(bool show){m_bShowBox = show;}
@@ -164,8 +165,9 @@ public:
 	WorldBlock* LastHitBlock;
 
 	// bonus and punish
-	vector<CWColladeFeature*> m_ObjectsToCollade;
-	void AddToColladeList(CWColladeFeature* object);
+	vector<CWPointObject*> m_ObjectsToCollade;
+	void AddToColladeList(CWPointObject* object);
+	void RemoveFromeCollideList(CWPointObject* object);
 	unsigned int m_MushroomCnt;
 	unsigned int m_ConeCnt;
 

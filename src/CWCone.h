@@ -1,7 +1,7 @@
 #pragma once
 #include "ColladeObject.h"
 class CWCone
-	: 	public CWColladeFeature
+	: 	public CWPointObject
 {
 public:
 	CWCone(void);

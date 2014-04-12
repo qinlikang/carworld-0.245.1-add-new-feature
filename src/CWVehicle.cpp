@@ -189,6 +189,8 @@ CWVehicle::CWVehicle(const char *name)
 	distractorN=0;
 	distractor.clear();
 	collisionTime=-10000.0; // so that the first collision alway happen
+
+	bFakeCar=false;
 }
 
 void CWVehicle::load(const char *name)
@@ -377,6 +379,9 @@ void CWVehicle::drawShape()
 	for (vector<Wheel>::iterator I = Wheels.begin() ; I != Wheels.end() ; I++)
 		(*I).draw();
 
+	if(bFakeCar)
+		return;
+
 	//don't draw the body if we are using this car's interior-camera
 	InCarCam* InCam = dynamic_cast<InCarCam*>(m_CarWorld->m_Camera);
 	if ((InCam==NULL) || (InCam->m_Vehicle!=this))
@@ -497,15 +502,17 @@ void CWVehicle::CollisionTest()
 {
 	if ( elapsed_time-collisionTime<1) // atleast 1 second
 		return;
+	if(bFakeCar)// we do not do colliding test when it's a fake car.
+		return;
 
 	Box3D box;
 	GetBox3D(box);
 	CCrashRec temp;
-	for(vector<CWColladeFeature*>::iterator it = m_ObjectsToCollade.begin(); it != m_ObjectsToCollade.end(); )
+	for(vector<CWPointObject*>::iterator it = m_ObjectsToCollade.begin(); it != m_ObjectsToCollade.end(); )
 	{
 		if(box.IsPtInside((*it)->GetPos()))
 		{
-			if((*it)->GetTag()==ECT_MUSHROOM)
+			if((*it)->GetTag()=="mushroom")
 			{
 				++m_MushroomCnt;
 				AudioPlayer::shared_audio()->get_sound("HitMushroom")->play_once();
@@ -516,7 +523,7 @@ void CWVehicle::CollisionTest()
 				Crashrecord.push_back(temp);
 				
 			}
-			else if((*it)->GetTag()==ECT_CONE)
+			else if((*it)->GetTag()=="cone")
 			{
 				++m_ConeCnt;
 				AudioPlayer::shared_audio()->get_sound("HitCone")->play_once();
@@ -537,7 +544,7 @@ void CWVehicle::CollisionTest()
 	}
 }
 
-void CWVehicle::AddToColladeList( CWColladeFeature* object )
+void CWVehicle::AddToColladeList( CWPointObject* object )
 {
 	m_ObjectsToCollade.push_back(object);
 }
@@ -568,4 +575,12 @@ void CWVehicle::AddToDistractor( const double t, const int tp, const char *c , c
 	d->time=t;
 	d->type=tp;
 	distractor.push_back(d);
+}
+
+void CWVehicle::RemoveFromeCollideList( CWPointObject* object )
+{
+	vector<CWPointObject*>::iterator it;
+	it=std::find(m_ObjectsToCollade.begin(),m_ObjectsToCollade.end(),object);
+	if(it!=m_ObjectsToCollade.end())
+		m_ObjectsToCollade.erase(it);
 }

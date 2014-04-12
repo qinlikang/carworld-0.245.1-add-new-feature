@@ -3,7 +3,6 @@
 #include "H_Graphics.h"
 #include <stdio.h>
 #include <sstream>
-#include "CWMushrom.h"
 #include "H_Main.h"
 
 #define FOR_ALL_RECORDERS for(std::map<const char*, CWRecorder*>::iterator it = m_Recorders.begin(); it!=m_Recorders.end();++it)
@@ -52,13 +51,14 @@ void CarWorld::add(CWFeature* AFeature)
 void CarWorld::add(CWVehicle* AVehicle)
 {
 	add((CWFeature*)AVehicle);
-	add(m_Camera = new InCarCam(AVehicle));
+	add(m_Camera = new FollowCam(AVehicle));
 	add(m_Recorders["vehicle"] = new VehicleStateRecorder(AVehicle));
 
+	add(new InCarCam(AVehicle));
 	add(new FreeCam(AVehicle));
 	add(new FixCam(AVehicle));
-	add(new FollowCam(AVehicle));
 	add(new SateliteCam(AVehicle));
+
 
 	m_Vehicle = AVehicle;
 }
@@ -318,4 +318,21 @@ void CarWorld::remove( const CWFeature* AFeature )
 void CarWorld::addKeyboardRecorder( const char* recorder_name,HWindow* hwindow )
 {
 	add(m_Recorders[recorder_name] = new KeyboardInputRecorder(hwindow));
+}
+
+void CarWorld::remove_all_collide_objects()
+{
+	list<CWFeature*>::iterator it = m_Features.begin();
+	for(;it!=m_Features.end();)
+	{
+		CWPointObject* pObject=dynamic_cast<CWPointObject*>(*it);
+		if(pObject)
+		{
+			it=m_Features.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
 }

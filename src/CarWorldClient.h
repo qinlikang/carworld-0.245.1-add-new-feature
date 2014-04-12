@@ -55,6 +55,28 @@ public:
 	void join(const char *host, short port);
 
 	void write_cfg(ostream &out);
+
+//add mode support, by LX, in different mode, we have different sets of keybind;
+	typedef map<SDLKey,string> KeyBindMap;
+	void ChangeMode(const string& mode);
+	map<string,KeyBindMap> m_ModesMap;
+	string m_CurrentMode;
+	void AddMode(const string& mode, const KeyBindMap& modemap);
+	void CoutMode();
+//add object 
+	struct ObjectInfo
+	{
+		string tag;
+		Point3D position;
+		Point3D forward;
+		Point3D right;
+		CWPointObject* pObject;
+	};
+	vector<ObjectInfo> m_ObjectList;
+	void AddAObject(const string& tag);// add object at current position
+	void DeleteNearestObject();
+	void SavePointObjectInfo(); // save the object list into the database;
+		
 public:
 	map<SDLKey,string> KeyBindings;
 private:
@@ -69,6 +91,8 @@ private:
 //command line
 	bool IsPromptMode;
 	map<string,HExecutable*> m_Executables;
+
+
 //input
 	HJoystick *RealJoystick;
 	KeyJoystick *FakeJoystick;

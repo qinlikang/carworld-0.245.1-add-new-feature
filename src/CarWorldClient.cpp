@@ -10,12 +10,12 @@
 #include "H_Variable.h"
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include "CWMushrom.h"
-#include "CWCone.h"
+#include "CollideObject.h"
 #include "OFFObjectPool.h"
 #include "CWBeeper.h"
 #include "MyDatabase.h"
-
+#include "boost/foreach.hpp"
+#include "boost/format.hpp"
 #include <ctime>
 
 #define CLIENT_TIMEOUT 200
@@ -85,6 +85,57 @@ public:
 		}
 	}
 	virtual ~BindKey() {}
+private:
+	CarWorldClient *CWC;
+};
+
+class Mode : public HExecutable
+{
+public:
+	Mode(CarWorldClient *CWC) : CWC(CWC) {}
+	void exec(const Command &c)
+	{
+		if (c.size()==2)
+			CWC->ChangeMode(c[1]);
+		else
+		{
+			cout << "usage: mode \"<mode-name>\"\n";
+			cout << "current available modes:\n";
+			map<string,CarWorldClient::KeyBindMap>::const_iterator it;
+			for(it=CWC->m_ModesMap.begin();it!=CWC->m_ModesMap.end();++it)
+			{
+				cout<<it->first<<endl;
+			}
+			CWC->CoutMode();
+		}
+
+	}
+	virtual ~Mode() {}
+private:
+	CarWorldClient *CWC;
+};
+class AddObject : public HExecutable
+{
+public:
+	AddObject(CarWorldClient *CWC) : CWC(CWC) {}
+	void exec(const Command &c)
+	{
+		if (c.size()==2)
+			CWC->AddAObject(c[1]);
+		else
+		{
+			cout << "usage: add_obj \"<off-file-tag>\"\n";
+			cout << "current available tags:\n";
+			vector<string>::const_iterator it;
+			vector<string> tags = OFFObjectPool::sharedOFFPool()->getTags();
+			for(it=tags.begin();it!=tags.end();++it)
+			{
+				cout<<*it<<endl;
+			}
+		}
+
+	}
+	virtual ~AddObject() {}
 private:
 	CarWorldClient *CWC;
 };
@@ -171,6 +222,7 @@ void CarWorldClient::draw_init()
 	m_HExecutableSet->add(new HVar<SDLKey>("right",&(FakeJoystick->right_key)));
 	m_HExecutableSet->add(new HVar<SDLKey>("handbreak",&(FakeJoystick->button_key)));
 
+
 	m_Executables["set"] = m_HExecutableSet;
 	m_Executables["join"] = new JoinServer(this);
 	m_Executables["bind"] = new BindKey(this);
@@ -188,43 +240,56 @@ void CarWorldClient::draw_init()
 	m_Executables["fogUp"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_up);
 	m_Executables["fogDown"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_down);
 
-
-	// add beepers
-	for(vector<CWBeeper>::iterator it = m_Vehicle->Beepers.begin(); it!= m_Vehicle->Beepers.end();++it)
-	{
-		m_Executables[it->BeeperName] = new BoostBindCall(boost::bind(&CWBeeper::beep,&(*it)));
-		bind(it->getSDLKeyBind(),it->BeeperName.c_str());
-	}
-
 	m_Executables["zoom_in"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::zoom_in);
 	m_Executables["zoom_out"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::zoom_out);
 
 	m_Executables["show_box"] =  new BoostBindCall(	boost::bind(&CWVehicle::SetShowBox,m_Vehicle,true));
 	m_Executables["no_show_box"] =  new BoostBindCall(	boost::bind(&CWVehicle::SetShowBox,m_Vehicle,false));
 
+	// change mode
+	m_Executables["mode"] =  new Mode(this);
+
+	// add object
+	m_Executables["add"] =  new AddObject(this);
+	m_Executables["del"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::DeleteNearestObject);
+	m_Executables["save"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::SavePointObjectInfo);
+	
+
+	// keybindings---------
+	// mode:play 
+	for(vector<CWBeeper>::iterator it = m_Vehicle->Beepers.begin(); it!= m_Vehicle->Beepers.end();++it)
+	{
+		m_Executables[it->BeeperName] = new BoostBindCall(boost::bind(&CWBeeper::beep,&(*it)));
+		bind(it->getSDLKeyBind(),it->BeeperName.c_str());
+	}
 	bind(SDLK_TAB,"toggleconsole");
 	bind(SDLK_F2, "next_camera");
 	bind(SDLK_F3, "reset");
 	bind(SDLK_F4, "set use_joystick 1");
 	bind(SDLK_F5, "set use_joystick 0");
-
 	bind(SDLK_F6, "record");
 	bind(SDLK_F7, "replay");
 	bind(SDLK_F8, "off_recorder");
-	// XX addfog
 	bind(SDLK_F9, "fogUp");
 	bind(SDLK_F10, "fogDown");
-
-
 	bind(SDLK_MINUS,"zoom_out");
 	bind(SDLK_EQUALS,"zoom_in");
-
 	bind(SDLK_n,"no_show_box");
 	bind(SDLK_b,"show_box");
-
 	execute_cfg(ConfigurationFileName());
+	AddMode("play",KeyBindings);
+
+	// mode: add
+	bind(SDLK_m,"add mushroom");
+	bind(SDLK_c,"add cone");
+	bind(SDLK_d,"del");
+	bind(SDLK_s,"save");
+
+	AddMode("add",KeyBindings);
 
 
+	// change mode into play mode
+	ChangeMode("play");
 	// resource adjust
 	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Scale(Point3D(0.01f,0.01f,0.01f));
 	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Translate(Point3D(-1.0f,-1.f,0.f));
@@ -570,6 +635,7 @@ void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 {
  	ofstream fs("Refs.txt");
  	CWLandscape* landscape = m_CarWorld->m_Landscape;
+	/*
  	for(list<WorldBlock>::iterator it = landscape->MyWorldBlocks.begin(); it != landscape->MyWorldBlocks.end(); ++it)
  	{
  		CWMushrom* pMushroom = new CWMushrom;
@@ -598,39 +664,27 @@ void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
  		m_Vehicle->AddToColladeList(pCone);
  	}
  	fs.close();
-	/*
+	*/  // commit out the automatic adding. Still read positions from database. I'll add support to write collide object database inside the game.
+	
 	CppSQLite3Query q = MyDatabase::shared_input_database()->execQuery("select * from CollideObjPosition;");
-
 	while(!q.eof())
 	{
-		if(q.fieldValue("tag")==string("cone"))
-		{
-			CWCone* pObj = new CWCone;
-			pObj->MyRef.Position = Point3D((REAL)q.getFloatField("x"),(REAL)q.getFloatField("y"),(REAL)q.getFloatField("z"));
-			pObj->MyRef.Y = Point3D((REAL)q.getFloatField("forwardx"),(REAL)q.getFloatField("forwardy"),(REAL)q.getFloatField("forwardz"));
-			pObj->MyRef.X = Point3D((REAL)q.getFloatField("rightx"),(REAL)q.getFloatField("righty"),(REAL)q.getFloatField("rightz"));
+		string objtag = q.fieldValue("tag");
+		CWPointObject* pObj = new CWPointObject;
+		pObj->SetTag(objtag);
+		pObj->MyRef.Position = Point3D((REAL)q.getFloatField("x"),(REAL)q.getFloatField("y"),(REAL)q.getFloatField("z"));
+		pObj->MyRef.Y = Point3D((REAL)q.getFloatField("forwardx"),(REAL)q.getFloatField("forwardy"),(REAL)q.getFloatField("forwardz"));
+		pObj->MyRef.X = Point3D((REAL)q.getFloatField("rightx"),(REAL)q.getFloatField("righty"),(REAL)q.getFloatField("rightz"));
+		m_CarWorld->add(pObj);
+		m_Vehicle->AddToColladeList(pObj);
 
-			m_CarWorld->add(pObj);
-			m_Vehicle->AddToColladeList(pObj);
-		}
-		else if(q.fieldValue("tag")==string("mushroom"))
-		{
-			CWMushrom* pObj = new CWMushrom;
-			pObj->MyRef.Position = Point3D((REAL)q.getFloatField("x"),(REAL)q.getFloatField("y"),(REAL)q.getFloatField("z"));
-			pObj->MyRef.Y = Point3D((REAL)q.getFloatField("forwardx"),(REAL)q.getFloatField("forwardy"),(REAL)q.getFloatField("forwardz"));
-			pObj->MyRef.X = Point3D((REAL)q.getFloatField("rightx"),(REAL)q.getFloatField("righty"),(REAL)q.getFloatField("rightz"));
-
-			m_CarWorld->add(pObj);
-			m_Vehicle->AddToColladeList(pObj);
-		}
 		q.nextRow();
 	}
-	// tihs part is good, but I want to change road, so using the automatic for now
-	*/
+
 	//Xian added, for distractorse
 	// can be either sound play once, or text, shown for duration should be separate data base for location
 	// but for now fixed location
-	CppSQLite3Query q = MyDatabase::shared_input_database()->execQuery("select * from Distractor;");
+	q = MyDatabase::shared_input_database()->execQuery("select * from Distractor;");
 	while(!q.eof())
 	{
 		m_Vehicle->AddToDistractor((double)q.getFloatField("time"),(int)q.getFloatField("type"),q.fieldValue("content"),(int)q.getFloatField("duration"));
@@ -651,4 +705,99 @@ void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 	}
 	q = MyDatabase::shared_input_database()->execQuery("select * from parameters; where tag='biofeedback'");
    	m_Vehicle->eeg.biofeedback=q.fieldValue("value")==string("T");
+}
+
+void CarWorldClient::ChangeMode( const string& mode )
+{
+	if(m_ModesMap.find(mode)==m_ModesMap.end())
+	{
+		// log error
+		cout<<"mode ["+mode+"] not exist, type mode to see what are supported"<<endl;
+		return;
+	}
+	m_CurrentMode=mode;
+	KeyBindings=m_ModesMap[mode];
+	if(mode=="play")
+	{
+		m_Vehicle->bFakeCar=false;
+	}
+	else if(mode=="add")
+	{
+		// clear all existing object
+		m_Vehicle->m_ObjectsToCollade.clear();
+		m_Vehicle->bFakeCar=true;
+		m_CarWorld->remove_all_collide_objects();
+	}
+}
+
+void CarWorldClient::AddMode( const string& mode, const KeyBindMap& modemap )
+{
+	if(mode.empty())return;
+	m_ModesMap[mode]=modemap;
+	CoutMode();
+}
+
+void CarWorldClient::CoutMode()
+{
+	cout<<"current mode ["+m_CurrentMode+"]";
+}
+
+void CarWorldClient::AddAObject( const string& tag )
+{
+	Ref& ref = m_Vehicle->MyRef;
+	
+	CWPointObject* pObj = new CWPointObject;
+	pObj->SetTag(tag);
+	pObj->MyRef = ref;
+	m_CarWorld->add(pObj);
+	m_Vehicle->AddToColladeList(pObj);
+	pObj->draw_init();
+
+	ObjectInfo info;
+	info.tag=tag;
+	info.position=m_Vehicle->GetCenterPos();
+	info.forward=ref.GetDirection();
+	info.right=ref.GetX();
+	info.pObject=pObj;
+	m_ObjectList.push_back(info);
+}
+
+void CarWorldClient::DeleteNearestObject()
+{
+	vector<ObjectInfo>::iterator it = m_ObjectList.begin();
+	int nNearest=-1;
+	float fNearestDist=1000000.0f;
+	for(int i=0;it!=m_ObjectList.end();++it,++i)
+	{
+		float dist = it->position.distance(m_Vehicle->GetCenterPos());
+		if(fNearestDist>dist)
+		{
+			nNearest=i;
+			fNearestDist=dist;
+		}
+	}
+	if(nNearest==-1)
+		return;
+	it = m_ObjectList.begin()+nNearest;
+	m_CarWorld->remove(it->pObject);
+	m_Vehicle->RemoveFromeCollideList(it->pObject);
+	m_ObjectList.erase(it);
+}
+
+void CarWorldClient::SavePointObjectInfo()
+{
+	// write into database
+	using namespace boost;
+	CppSQLite3DB* db = MyDatabase::shared_input_database();
+	db->execDML("delete from CollideObjPosition");
+
+	string sql;
+	BOOST_FOREACH(ObjectInfo& info,m_ObjectList)
+	{
+		format fmt = format("insert into CollideObjPosition values('%s',%f,%f,%f,%f,%f,%f,%f,%f,%f);")
+			%info.tag %info.position.x() %info.position.y() %info.position.z() %info.forward.x() %info.forward.y() %info.forward.z()
+			%info.right.x() %info.right.y() %info.right.z();
+		sql+=fmt.str();
+	}
+	db->execDML(sql.c_str());
 }

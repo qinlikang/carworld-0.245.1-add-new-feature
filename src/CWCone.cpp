@@ -3,7 +3,7 @@
 
 
 CWCone::CWCone(void)
-	: CWColladeFeature(ECT_CONE)
+	: CWPointObject(ECT_CONE)
 {
 	MyRef.X = Point3D(1,0,0);
 	MyRef.Y = Point3D(0,1,0);

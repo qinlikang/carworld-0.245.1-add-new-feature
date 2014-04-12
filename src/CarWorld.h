@@ -45,6 +45,8 @@ public:
 	void zoom_in();
 	void zoom_out();
 
+	void remove_all_collide_objects();
+
 public:
 	CWLandscape *m_Landscape;
 	CWCamera *m_Camera; //the current camera

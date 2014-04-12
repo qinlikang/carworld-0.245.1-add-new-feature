@@ -5,15 +5,9 @@
 #include "CarWorldClasses.h"
 #include "Box3D.h"
 
-enum E_COLLADE_TAG
-{
-	ECT_MUSHROOM,
-	ECT_CONE
-};
-
 
 // every object which can collade should derive this class
-class ColladeObjectInterface
+class CollideObjectInterface
 {
 public:
 
@@ -23,16 +17,21 @@ public:
 	virtual bool IsPointInside(const Point3D& pt) const = 0;
 };
 
-class CWColladeFeature:public CWFeature
+class CWPointObject:public CWFeature
 {
 public:
-	CWColladeFeature(E_COLLADE_TAG tag):m_tag(tag)
-	{}
+	CWPointObject(){}
 
-	int GetTag()const {return m_tag;}
-	void SetTag(E_COLLADE_TAG tag){m_tag = tag;}
+	std::string GetTag()const {return m_tag;}
+	void SetTag(const string& tag){m_tag = tag;}
 
-	virtual Point3D GetPos()const=0;
+	virtual Point3D GetPos()const;
+
+	virtual void draw_init();
+	virtual void draw();
+
+	Ref MyRef;
+	OFFObject* MyMesh;
 private:
-	int m_tag;
+	std::string m_tag;
 };

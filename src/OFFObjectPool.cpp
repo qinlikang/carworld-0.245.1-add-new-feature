@@ -46,3 +46,12 @@ void OFFObjectPool::loadOffs()
 		q.nextRow();
 	}
 }
+
+vector<string> OFFObjectPool::getTags() const
+{
+	std::map<std::string,OFFObject>::const_iterator it = m_Meshes.begin();
+	vector<string> ret;
+	for(;it!=m_Meshes.end();++it)
+		ret.push_back(it->first);
+	return ret;
+}
