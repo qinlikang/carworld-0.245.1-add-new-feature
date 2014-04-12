@@ -42,8 +42,13 @@ void OFFObjectPool::loadOffs()
 	
 	while(!q.eof())
 	{
-		loadOneFromFile(q.fieldValue("path"),q.fieldValue("tag"));
+		string _tag = q.fieldValue("tag");
+		string _script = q.fieldValue("script");
+		const char* _off=q.fieldValue("path");
+		if(_off)
+			loadOneFromFile(_off,_tag);
 		q.nextRow();
+		m_Scripts[_tag]=_script;
 	}
 }
 
@@ -54,4 +59,9 @@ vector<string> OFFObjectPool::getTags() const
 	for(;it!=m_Meshes.end();++it)
 		ret.push_back(it->first);
 	return ret;
+}
+
+const string& OFFObjectPool::getScriptName( const std::string& tag )
+{
+	return m_Scripts[tag];
 }

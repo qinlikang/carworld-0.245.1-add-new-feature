@@ -222,7 +222,7 @@ void CarWorld::DrawOnScreen()
 	*/
 
 	char BonusHint[30]={0};
-	sprintf(BonusHint,"Score: %d | Fail:%d",m_Vehicle->m_MushroomCnt,m_Vehicle->m_ConeCnt);
+	sprintf(BonusHint,"Score: %d | Fail:%d",m_Vehicle->m_HitCount["mushroom"],m_Vehicle->m_HitCount["cone"]);
 	Hgl::WriteText(BonusHint, Point2D(.0f,-.90f)); //write global position
 
 	glPopMatrix();

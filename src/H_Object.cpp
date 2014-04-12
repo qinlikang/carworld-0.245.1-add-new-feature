@@ -332,14 +332,14 @@ void OFFObject::InitMyData()
 
 	}
 	// init bounding
-	MyBox.A1 = Point3D(minX,minY,maxZ);
+	MyBox.A1 = Point3D(minX,maxY,minZ);
 	MyBox.A2 = Point3D(minX,maxY,maxZ);
-	MyBox.B1 = Point3D(maxX,minY,maxZ);
+	MyBox.B1 = Point3D(maxX,maxY,minZ);
 	MyBox.B2 = Point3D(maxX,maxY,maxZ);
 	MyBox.C1 = Point3D(maxX,minY,minZ);
-	MyBox.C2 = Point3D(maxX,maxY,minZ);
+	MyBox.C2 = Point3D(maxX,minY,maxZ);
 	MyBox.D1 = Point3D(minX,minY,minZ);
-	MyBox.D2 = Point3D(minX,maxY,minZ);
+	MyBox.D2 = Point3D(minX,minY,maxZ);
 	MyBox.Init();
 
 }

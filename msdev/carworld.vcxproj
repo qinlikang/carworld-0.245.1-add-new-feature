@@ -251,6 +251,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\src\Utility.cpp" />
     <ClCompile Include="..\src\WorldBlock.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -287,6 +288,7 @@
     <ClInclude Include="..\src\CWVersion.h" />
     <ClInclude Include="..\src\sqlite\CppSQLite3.h" />
     <ClInclude Include="..\src\Tacho.h" />
+    <ClInclude Include="..\src\Utility.h" />
     <ClInclude Include="..\src\WorldBlock.h" />
   </ItemGroup>
   <ItemGroup>

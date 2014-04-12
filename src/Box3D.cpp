@@ -17,3 +17,20 @@ void Box3D::DrawFrame() const
 #undef RENDER
 	glEnable(GL_LIGHTING);
 }
+
+bool PlaneInsectSegment(const REAL plane[4],const Point3D& pt1,const Point3D& pt2,Point3D& insect )
+{
+	REAL val1 = SubstituteIntoPlane(plane,pt1);
+	REAL val2 = SubstituteIntoPlane(plane,pt2);
+	
+	if(val1*val2>0)
+		return false;
+
+	Point3D n(plane[0],plane[1],plane[2]);
+	Point3D v = pt1-pt2;
+	float _lambda = val1/(v*n);
+	assert(_lambda>=0&&_lambda<=1);
+	insect = (1-_lambda)*pt1+(_lambda)*pt2;
+
+	return true;
+}

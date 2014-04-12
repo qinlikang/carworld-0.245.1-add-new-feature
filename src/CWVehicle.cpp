@@ -7,7 +7,12 @@
 #include "H_XML.h"
 #include <boost/bind.hpp>
 #include "CWBeeper.h"
+#include "CarWorldClient.h"
+#include "boost/foreach.hpp"
+#include "OFFObjectPool.h"
+
 extern ofstream herr;
+extern CarWorldClient* pCWC;
 
 CWCommand::CWCommand() : GasBrake(0), Steer(0), SteerFeedBack(0), HandBrake(false)
 {}
@@ -179,7 +184,7 @@ void Wheel::draw()
 
 //CLASS CWVehicle:
 CWVehicle::CWVehicle(const char *name)
-	: m_MushroomCnt(0),m_bShowBox(false),m_ConeCnt(0)
+	: m_bShowBox(false)
 {
 	MyDriveTrain = DriveTrain(RedLine, MaxTorque);
 	MyRef = InertRef(Mass, MassDistrib);
@@ -191,6 +196,11 @@ CWVehicle::CWVehicle(const char *name)
 	collisionTime=-10000.0; // so that the first collision alway happen
 
 	bFakeCar=false;
+	vector<string> _tags=OFFObjectPool::sharedOFFPool()->getTags();
+	BOOST_FOREACH(const string&tag,_tags)
+	{
+		m_HitCount[tag]=0;
+	}
 }
 
 void CWVehicle::load(const char *name)
@@ -510,35 +520,42 @@ void CWVehicle::CollisionTest()
 	CCrashRec temp;
 	for(vector<CWPointObject*>::iterator it = m_ObjectsToCollade.begin(); it != m_ObjectsToCollade.end(); )
 	{
-		if(box.IsPtInside((*it)->GetPos()))
+		if((*it)->IsCollideWithBox(box))
 		{
+			if(!m_ObjIsColliding[(*it)])// it is not collided before
+			{
+				// execute colliding script!
+				if(pCWC)
+				{
+					pCWC->execute_cfg((*it)->ScriptFile.c_str());
+				}
+				// record the hit count;
+				++m_HitCount[(*it)->GetTag()];
+			}
+			m_ObjIsColliding[(*it)]=true;
+
+
 			if((*it)->GetTag()=="mushroom")
 			{
-				++m_MushroomCnt;
-				AudioPlayer::shared_audio()->get_sound("HitMushroom")->play_once();
 				nirs.on(elapsed_time); 
 				collisionTime=elapsed_time;
 				temp.time=elapsed_time;
 				temp.type=2;
 				Crashrecord.push_back(temp);
-				
+
 			}
 			else if((*it)->GetTag()=="cone")
 			{
-				++m_ConeCnt;
-				AudioPlayer::shared_audio()->get_sound("HitCone")->play_once();
 				nirs.on(elapsed_time); 
 				collisionTime=elapsed_time;
 				temp.time=elapsed_time;
 				temp.type=1;
 				Crashrecord.push_back(temp);
 			}
-
-			//m_CarWorld->remove(*it);
-			//it = m_ObjectsToCollade.erase(it);
-			// now we do not have to delete them anymore
-			//continue;
-			return;
+		}
+		else
+		{
+			m_ObjIsColliding[(*it)]=false;
 		}
 		++it;
 	}
@@ -547,6 +564,7 @@ void CWVehicle::CollisionTest()
 void CWVehicle::AddToColladeList( CWPointObject* object )
 {
 	m_ObjectsToCollade.push_back(object);
+	m_ObjIsColliding[object]=false;
 }
 
 void CWVehicle::updateTime(double t){ 
@@ -582,5 +600,8 @@ void CWVehicle::RemoveFromeCollideList( CWPointObject* object )
 	vector<CWPointObject*>::iterator it;
 	it=std::find(m_ObjectsToCollade.begin(),m_ObjectsToCollade.end(),object);
 	if(it!=m_ObjectsToCollade.end())
+	{
 		m_ObjectsToCollade.erase(it);
+		m_ObjIsColliding.erase(m_ObjIsColliding.find(object));
+	}
 }

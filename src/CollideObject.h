@@ -29,9 +29,14 @@ public:
 
 	virtual void draw_init();
 	virtual void draw();
+	void drawColliding();
+
+	bool IsCollideWithBox(const Box3D& box) const;
 
 	Ref MyRef;
 	OFFObject* MyMesh;
+	std::string ScriptFile;
+	int Width; // add segment colliding support
 private:
 	std::string m_tag;
 };

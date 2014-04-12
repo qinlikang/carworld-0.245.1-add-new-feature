@@ -3,6 +3,7 @@
 #include "SDL_keysym.h"
 #include <string>
 #include <map>
+#include <vector>
 class SoundPlayer
 {
 public:
@@ -45,6 +46,7 @@ public:
 
 	void load_from_db();
 	SoundPlayer* get_sound(const std::string& name);
+	std::vector<std::string> get_all_sound_name()const;
 };
 
 class CWBeeper

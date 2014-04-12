@@ -3,6 +3,7 @@
 #include "H_Standard.h"
 #include "H_Keys.h"
 #include "MyDatabase.h"
+#include "Utility.h"
 using namespace std;
 
 SoundPlayer::SoundPlayer( void)
@@ -111,4 +112,9 @@ void AudioPlayer::release_audio()
 		delete sp_audioplayer;
 
 	sp_audioplayer = NULL;
+}
+
+vector<string> AudioPlayer::get_all_sound_name() const
+{
+	return GetMapKeys(m_Sounds);
 }

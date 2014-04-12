@@ -70,13 +70,16 @@ public:
 		Point3D position;
 		Point3D forward;
 		Point3D right;
+		int width;
 		CWPointObject* pObject;
 	};
 	vector<ObjectInfo> m_ObjectList;
-	void AddAObject(const string& tag);// add object at current position
+	void AddAObject(const string& tag,int width);// add object at current position
 	void DeleteNearestObject();
 	void SavePointObjectInfo(); // save the object list into the database;
-		
+	
+	// play a sound
+	void PlayASoundOnce(const string& sound);
 public:
 	map<SDLKey,string> KeyBindings;
 private:

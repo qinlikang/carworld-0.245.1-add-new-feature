@@ -116,6 +116,9 @@
     <ClCompile Include="..\src\CollideObject.cpp">
       <Filter>CarWorld specific</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Utility.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\DXJoystick.h">
@@ -218,6 +221,9 @@
       <Filter>CarWorld specific</Filter>
     </ClInclude>
     <ClInclude Include="..\src\CollideObject.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility.h">
       <Filter>CarWorld specific</Filter>
     </ClInclude>
   </ItemGroup>

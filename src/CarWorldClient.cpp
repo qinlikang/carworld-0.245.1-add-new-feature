@@ -121,10 +121,12 @@ public:
 	void exec(const Command &c)
 	{
 		if (c.size()==2)
-			CWC->AddAObject(c[1]);
+			CWC->AddAObject(c[1],0);
+		else if(c.size()==3)
+			CWC->AddAObject(c[1],atoi(c[2].c_str()));
 		else
 		{
-			cout << "usage: add_obj \"<off-file-tag>\"\n";
+			cout << "usage: add_obj \"<off-file-tag>\" \"[width]\"\n";
 			cout << "current available tags:\n";
 			vector<string>::const_iterator it;
 			vector<string> tags = OFFObjectPool::sharedOFFPool()->getTags();
@@ -136,6 +138,32 @@ public:
 
 	}
 	virtual ~AddObject() {}
+private:
+	CarWorldClient *CWC;
+};
+
+class EX_PlaySound : public HExecutable
+{
+public:
+	EX_PlaySound(CarWorldClient *CWC) : CWC(CWC) {}
+	void exec(const Command &c)
+	{
+		if (c.size()==2)
+			CWC->PlayASoundOnce(c[1]);
+		else
+		{
+			cout << "usage: playsound \"<sound-name>\"\n";
+			cout << "current available sounds:\n";
+			vector<string>::const_iterator it;
+			vector<string> tags = AudioPlayer::shared_audio()->get_all_sound_name();
+			for(it=tags.begin();it!=tags.end();++it)
+			{
+				cout<<*it<<endl;
+			}
+		}
+
+	}
+	virtual ~EX_PlaySound() {}
 private:
 	CarWorldClient *CWC;
 };
@@ -254,6 +282,7 @@ void CarWorldClient::draw_init()
 	m_Executables["del"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::DeleteNearestObject);
 	m_Executables["save"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::SavePointObjectInfo);
 	
+	m_Executables["playsound"] = new EX_PlaySound(this);
 
 	// keybindings---------
 	// mode:play 
@@ -282,6 +311,7 @@ void CarWorldClient::draw_init()
 	// mode: add
 	bind(SDLK_m,"add mushroom");
 	bind(SDLK_c,"add cone");
+	bind(SDLK_b,"add sobj 10");
 	bind(SDLK_d,"del");
 	bind(SDLK_s,"save");
 
@@ -675,6 +705,7 @@ void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 		pObj->MyRef.Position = Point3D((REAL)q.getFloatField("x"),(REAL)q.getFloatField("y"),(REAL)q.getFloatField("z"));
 		pObj->MyRef.Y = Point3D((REAL)q.getFloatField("forwardx"),(REAL)q.getFloatField("forwardy"),(REAL)q.getFloatField("forwardz"));
 		pObj->MyRef.X = Point3D((REAL)q.getFloatField("rightx"),(REAL)q.getFloatField("righty"),(REAL)q.getFloatField("rightz"));
+		pObj->Width = (int)q.getFloatField("width");
 		m_CarWorld->add(pObj);
 		m_Vehicle->AddToColladeList(pObj);
 
@@ -742,7 +773,7 @@ void CarWorldClient::CoutMode()
 	cout<<"current mode ["+m_CurrentMode+"]";
 }
 
-void CarWorldClient::AddAObject( const string& tag )
+void CarWorldClient::AddAObject( const string& tag ,int width)
 {
 	Ref& ref = m_Vehicle->MyRef;
 	
@@ -751,6 +782,7 @@ void CarWorldClient::AddAObject( const string& tag )
 	pObj->MyRef = ref;
 	m_CarWorld->add(pObj);
 	m_Vehicle->AddToColladeList(pObj);
+	pObj->Width=width;
 	pObj->draw_init();
 
 	ObjectInfo info;
@@ -759,6 +791,7 @@ void CarWorldClient::AddAObject( const string& tag )
 	info.forward=ref.GetDirection();
 	info.right=ref.GetX();
 	info.pObject=pObj;
+	info.width=width;
 	m_ObjectList.push_back(info);
 }
 
@@ -794,10 +827,15 @@ void CarWorldClient::SavePointObjectInfo()
 	string sql;
 	BOOST_FOREACH(ObjectInfo& info,m_ObjectList)
 	{
-		format fmt = format("insert into CollideObjPosition values('%s',%f,%f,%f,%f,%f,%f,%f,%f,%f);")
-			%info.tag %info.position.x() %info.position.y() %info.position.z() %info.forward.x() %info.forward.y() %info.forward.z()
-			%info.right.x() %info.right.y() %info.right.z();
+		format fmt = format("insert into CollideObjPosition values(%d,'%s',%f,%f,%f,%f,%f,%f,%f,%f,%f);")
+			%info.width %info.tag %info.position.x() %info.position.y() %info.position.z() %info.forward.x() %info.forward.y() %info.forward.z()
+			%info.right.x() %info.right.y() %info.right.z() ;
 		sql+=fmt.str();
 	}
 	db->execDML(sql.c_str());
+}
+
+void CarWorldClient::PlayASoundOnce( const string& sound )
+{
+	AudioPlayer::shared_audio()->get_sound(sound)->play_once();
 }

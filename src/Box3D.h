@@ -79,6 +79,7 @@ struct Box3D
 		return true;
 	}
 
+
 	template<class Functor>
 	void VisitAllPoint(const Functor& visitor)
 	{
@@ -97,3 +98,5 @@ struct Box3D
 
 	void DrawFrame()const;
 };
+
+bool PlaneInsectSegment(const REAL plane[4],const Point3D& pt1,const Point3D& pt2,Point3D& insect);

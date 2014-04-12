@@ -168,8 +168,8 @@ public:
 	vector<CWPointObject*> m_ObjectsToCollade;
 	void AddToColladeList(CWPointObject* object);
 	void RemoveFromeCollideList(CWPointObject* object);
-	unsigned int m_MushroomCnt;
-	unsigned int m_ConeCnt;
+	std::map<std::string,unsigned int> m_HitCount;
+	std::map<CWPointObject*,bool> m_ObjIsColliding;
 
 	// box
 	bool m_bShowBox;

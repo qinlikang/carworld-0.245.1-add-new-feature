@@ -165,6 +165,8 @@ int find(int argc, char **argv, const char *v)
 
 extern ofstream herr;
 
+CarWorldClient* pCWC=NULL;
+
 MixerManagerSingleton mixer;
 //char g_in_database_name[1000];
 int main(int argc, char *argv[])
@@ -184,7 +186,7 @@ int main(int argc, char *argv[])
 			//strcpy(g_in_database_name,argv[db]);
 		//	herr<<g_in_database_name<<endl;
 		//}
-		HglApplication* app = new CarWorldClient(full_screen,not_save);
+		HglApplication* app = pCWC = new CarWorldClient(full_screen,not_save);
 
 		{
 			SDL_version CompileVer;
@@ -301,7 +303,7 @@ int main(int argc, char *argv[])
 		}
 		OFFObjectPool::release();
 		delete app;
-		app = NULL;
+		app = pCWC = NULL;
 		cout.rdbuf(cout_streambuf);
 		AudioPlayer::release_audio();
 		GetMixer().Quit();
