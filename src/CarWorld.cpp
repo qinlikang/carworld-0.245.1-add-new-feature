@@ -8,7 +8,7 @@
 
 #define FOR_ALL_RECORDERS for(std::map<const char*, CWRecorder*>::iterator it = m_Recorders.begin(); it!=m_Recorders.end();++it)
 //CLASS CarWorld:
-CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
+CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile, bool not_save) :
 						m_Landscape(new CWLandscape(LandscapeFile)),
 						m_Camera(new FixCam()),
 						m_Background(new CWBackground()),
@@ -28,6 +28,7 @@ CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
 	add(m_Background);
 
 	Ref::TimeIncrement = INIT_TIME_INCREMENT;
+	m_not_save=not_save;
 }
 void CarWorld::draw_init()
 {
@@ -37,6 +38,7 @@ void CarWorld::draw_init()
 }
 CarWorld::~CarWorld()
 {
+	off_recorder();
 	for (list<CWFeature*>::iterator I=m_Features.begin() ; I!=m_Features.end() ; I++)
 		delete (*I);
 }
@@ -107,7 +109,7 @@ void CarWorld::update(int ElapsedTimeMs)
 		Frames = 0;
 		RealTime = 0;
 	}
-
+	
 	for (int i=0 ; i<NbTimeClicksPerFrame ; i++)
 	{
 		if(m_Recorders["vehicle"]!=NULL&&m_Recorders["vehicle"]->is_replay_and_finished()) return;
@@ -177,8 +179,10 @@ void CarWorld::DrawOnScreen()
 
 	ostringstream FPSCaption;
 	FPSCaption << fps;
+	/*
 	Hgl::SetColor(White);
-	Hgl::WriteText(FPSCaption.str().c_str(), Point2D(-.25,.75)); //write fps and speed*/
+	Hgl::WriteText(FPSCaption.str().c_str(), Point2D(-.25,.75)); //write fps and speed
+	
 
 	//draw car info
 	m_Camera->DrawOnScreen();
@@ -215,7 +219,7 @@ void CarWorld::DrawOnScreen()
 			}
 		}
 	}
-
+	*/
 
 	char BonusHint[30]={0};
 	sprintf(BonusHint,"Score: %d | Fail:%d",m_Vehicle->m_MushroomCnt,m_Vehicle->m_ConeCnt);
@@ -250,6 +254,7 @@ void CarWorld::replay()
 
 void CarWorld::off_recorder()
 {
+	if ( m_not_save) return;
 	m_Recorders["vehicle"]->m_strOtherMsg= "FileSaved!! ";
 	FOR_ALL_RECORDERS
 	{

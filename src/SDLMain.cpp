@@ -166,7 +166,7 @@ int find(int argc, char **argv, const char *v)
 extern ofstream herr;
 
 MixerManagerSingleton mixer;
-
+//char g_in_database_name[1000];
 int main(int argc, char *argv[])
 {
 	streambuf* cout_streambuf = cout.rdbuf();
@@ -175,7 +175,16 @@ int main(int argc, char *argv[])
 	{
 
 		bool full_screen = find(argc,argv,"-f")!=argc;
-		HglApplication* app = new CarWorldClient(full_screen);
+			bool not_save = find(argc,argv,"-t")!=argc;
+	//	int db=find(argc,argv,"-db");
+		//if (db<argc){
+			//db++;
+			//g_in_database_name[0]='a';
+		//	herr<<argv[db]<<endl;
+			//strcpy(g_in_database_name,argv[db]);
+		//	herr<<g_in_database_name<<endl;
+		//}
+		HglApplication* app = new CarWorldClient(full_screen,not_save);
 
 		{
 			SDL_version CompileVer;

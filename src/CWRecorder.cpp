@@ -130,7 +130,7 @@ void VehicleStateRecorder::record()
 	}
 
 	double elapse_time = double(m_Timer.get_elapse_clocks())/CLOCKS_PER_SEC;
-
+	m_Vehicle->updateTime(elapse_time);
 	m_Records.push_back(BaseItemPtrT(new CWRecordItem_VehicleState(m_Vehicle,elapse_time)));
 	m_Cursor=m_Records.end();
 }
@@ -144,6 +144,7 @@ void VehicleStateRecorder::replay()
 	++m_Cursor;
 }
 
+// xian modify so that save faster
 std::string VehicleStateRecorder::dump()
 {
 	using namespace boost;
@@ -155,7 +156,12 @@ std::string VehicleStateRecorder::dump()
 	// creat a new record table
 	db->execDML(
 		fmt.str().c_str()
-		);
+	);
+
+	// using the table name as the fle name to generate a data file
+	 fmt = format("Records\\%s")%table;
+	ofstream outf(fmt.str().c_str());
+
 
 	// record the stuff
 	unsigned int i=0;
@@ -165,12 +171,28 @@ std::string VehicleStateRecorder::dump()
 		if(p)
 		{
 			Point3D& pos = p->m_State.m_Ref.Position;
-			format fmt = format("insert into %s values(%d, %f, %f, %f, %f)")%table%i%(p->m_TimeElapse)%pos.x()%pos.y()%pos.z();
-			db->execDML(fmt.str().c_str());
+			//format fmt = format("insert into %s values(%d, %f, %f, %f, %f)")%table%i%(p->m_TimeElapse)%pos.x()%pos.y()%pos.z();
+			//db->execDML(fmt.str().c_str());  db saving too slow, direct save
+			format fmt = format("%d, %f, %f, %f, %f")%i%(p->m_TimeElapse)%pos.x()%pos.y()%pos.z();
+			outf<<fmt.str().c_str()<<endl;
 			++i;
 		}
 	}
+	outf.close();
 
+	// xian add crash record
+	 fmt = format("create table %s_crash (elapsed_time time,type int)")%table;
+	// creat a new record table
+	db->execDML(
+		fmt.str().c_str()
+		);
+
+
+	for (i=0;i<m_Vehicle->Crashrecord.size();i++)
+	{
+		format fmt = format("insert into %s_crash values(%d, %d)")%table%m_Vehicle->Crashrecord[i].time%m_Vehicle->Crashrecord[i].type;
+		db->execDML(fmt.str().c_str()); 	
+	}
 	return table;
 }
 
@@ -228,6 +250,11 @@ std::string KeyboardInputRecorder::dump()
 		fmt.str().c_str()
 		);
 
+	 fmt = format("Records\\%s")%table;
+	
+	ofstream outf(fmt.str().c_str());
+
+
 	// record the stuff
 	unsigned int i=0;
 	BOOST_FOREACH(BaseItemPtrT& p_record,m_Records)
@@ -235,13 +262,18 @@ std::string KeyboardInputRecorder::dump()
 		ItemPtrT p = static_pointer_cast<ItemT>(p_record);
 		if(p)
 		{
-			format fmt = format("insert into %s values(%d, %f, %d, %d, %d, %d, %d)")%table%i%(p->m_TimeElapse)
+			//format fmt = format("insert into %s values(%d, %f, %d, %d, %d, %d, %d)")%table%i%(p->m_TimeElapse)
+				//%int(p->upPressed)%int(p->downPressed)%int(p->leftPressed)%int(p->rightPressed)%int(p->spacePressed);
+			//db->execDML(fmt.str().c_str()); works very slow
+			if (p->upPressed|p->downPressed|p->leftPressed|p->rightPressed|p->spacePressed){
+			format fmt = format("%d, %f, %d, %d, %d, %d, %d")%i%(p->m_TimeElapse)
 				%int(p->upPressed)%int(p->downPressed)%int(p->leftPressed)%int(p->rightPressed)%int(p->spacePressed);
-			db->execDML(fmt.str().c_str());
+			outf<<fmt.str().c_str()<<endl;
+			}
 			++i;
 		}
 	}
-
+	outf.close();
 	return table;
 
 }

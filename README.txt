@@ -21,3 +21,15 @@ Complete this readme file ..
 Modify to read more format of file
 Modify to show billboard on roads
 and so on ..
+
+
+5/6/2013 xian
+add in CWVehcle:
+array of distractors;
+
+in database
+Distractor: time (s), type: 0 music, 1 test, duration: (text only) (s)
+
+hide the text display for most items
+
+added dump at the carword distructor automatic

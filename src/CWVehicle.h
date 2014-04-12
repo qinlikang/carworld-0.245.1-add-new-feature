@@ -4,8 +4,11 @@
 
 #include "CarWorldClasses.h"
 #include "CWBeeper.h"
+#include "NirsTrigger.h"
+#include "Brain.h"
 #include "ColladeObject.h"
-
+#include <fstream>
+#include <vector>
 class CWVehicle;
 
 //describes the state of the vehicle controls
@@ -87,7 +90,18 @@ struct CWVehicleState
 	Ref m_Ref;
 	CWCommand m_Command;
 };
-
+struct CCrashRec
+{
+	double time;
+	int type; // 0 crash, 1 cone, 2 mushroom, 
+};
+struct CDistractor
+{
+	double time;
+	int type; // 0 music, 1 text
+	string str;
+	int duration; // 0 music no meaning, but text will disappear later
+};
 class CWVehicle : public CWFeature, public ColladeObjectInterface
 {
 public:
@@ -157,6 +171,21 @@ public:
 
 	// box
 	bool m_bShowBox;
+
+	// xian added record events
+	std::ofstream outf;
+	std::vector <CCrashRec> Crashrecord;
+	double elapsed_time; //in ms since start
+	void updateTime(double t);
+	std::vector <CDistractor *> distractor;
+	int distractorN;
+	void AddToDistractor( const double t, const int tp, const char *c , const int dur);
+	// add a time so that one colliion does not continuously happen, current solution is to remove the object, 
+	// but the second lapse, the drive wont see them anymore
+	double collisionTime;
+
+	NirsTrigger nirs; // for triggering
+	Brain eeg;
 };
 
 #endif //__CW_VEHICLE_H_

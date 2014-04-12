@@ -16,8 +16,10 @@
 #include "CWBeeper.h"
 #include "MyDatabase.h"
 
-#define CLIENT_TIMEOUT 200
+#include <ctime>
 
+#define CLIENT_TIMEOUT 200
+extern ofstream herr;
 
 static const char * const help_text  =
 	"available commands:\n"
@@ -72,6 +74,7 @@ public:
 			CWC->bind(ToSDLKey(c[1].c_str()), c[2].c_str());
 		else
 			cout << "usage: bind <key> \"<command line>\"\n";
+
 	}
 	void serialize(ostream &out)
 	{
@@ -101,7 +104,7 @@ public:
 };
 
 //CLASS CarWorldClient
-CarWorldClient::CarWorldClient(bool full_screen) :
+CarWorldClient::CarWorldClient(bool full_screen,bool not_save) :
 	m_Hgl(NULL),
 	IsPromptMode(false),
 	RealJoystick(NULL),
@@ -110,19 +113,19 @@ CarWorldClient::CarWorldClient(bool full_screen) :
 	m_socket(NULL),
 	ID(0),
 	m_Vehicle(NULL),
+	start_time_mark(false),
 	m_CarWorld(NULL)
 {
 	m_window->SetAttrib(640,480,full_screen);
 //switch cout to display in the on screen prompt + log
 	cout.rdbuf(&hbuf);
 	cout << "starting " << name() << " ...\n\n";
-	m_CarWorld = new CarWorld(TimeRefreshRate(),DEFAULT_LANDSCAPE);
+	m_CarWorld = new CarWorld(TimeRefreshRate(),landscapename(),not_save);
 	m_Vehicle = new CWVehicle(DEFAULT_VEHICLE);
 	m_CarWorld->add(m_Vehicle);
 
 
 	AddColladeObjs(m_CarWorld);
-
 }
 
 void CarWorldClient::draw_init()
@@ -405,7 +408,7 @@ void CarWorldClient::key_down(SDLKey AHKey, char c)
 	{
 		string ReturnedCommand(hbuf.HitKey(AHKey,c));
 		if (!ReturnedCommand.empty())
-			pars_command(ReturnedCommand.c_str());	
+			pars_command(ReturnedCommand.c_str());
 	}
 	map<SDLKey,string>::iterator I = KeyBindings.find(AHKey);
 	if (I != KeyBindings.end()&&!IsPromptMode)// LX: to disable further process of keydown msg when using console.
@@ -495,6 +498,22 @@ void CarWorldClient::on_idle(unsigned int elapsed_time)
 		{
 			UpdateCommand(&m_Vehicle->MyCommand, CurrentJoystick);
 			m_CarWorld->update(elapsed_time);
+			if (start_time_mark==false){
+				start_time_mark=true;
+				herr<<elapsed_time<<" ";
+				time_t curTime;
+				struct tm locTime;
+				const int TimeStrLen = 26;
+				char timeStr[ TimeStrLen ];
+
+				if (    ( -1 != time( &curTime ) )                          // Seconds since 01-01-1970
+							   &&  ( 0 == localtime_s( &locTime, &curTime ) )          // Convert to local time
+							  &&  ( 0 == asctime_s( timeStr, TimeStrLen, &locTime ) ) // Convert to string
+							  )
+				{
+			   herr << "Date-time is: " << timeStr;
+				}
+			}
 		}// LX: to disable further process of keydown msg when using console.
 		draw();
 	}
@@ -537,32 +556,49 @@ void CarWorldClient::mouse_wheel( const SDL_MouseButtonEvent& event )
 	}
 }
 
+
+//xian change
+
+const char * CarWorldClient::landscapename(){
+	CppSQLite3Query q = MyDatabase::shared_input_database()->execQuery("select * from landscape;");
+	static string sret;
+	sret = string(q.fieldValue("name"));
+	return sret.c_str();
+}
+// end of xian change
 void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 {
-// 	ofstream fs("Refs.txt");
-// 	CWLandscape* landscape = m_CarWorld->m_Landscape;
-// 	for(list<WorldBlock>::iterator it = landscape->MyWorldBlocks.begin(); it != landscape->MyWorldBlocks.end(); ++it)
-// 	{
-// // 		CWMushrom* pMushroom = new CWMushrom;
-// // 		pMushroom->MyRef.Position = it->Triangles[0].GetPointByUV(0,0) + Point3D(0,0,1);
-// // 		pMushroom->MyRef.Y = it->Triangles[0].GetForwardDirection();
-// // 		pMushroom->MyRef.X = pMushroom->MyRef.Y ^ pMushroom->MyRef.Z;
-// // 		m_CarWorld->add(pMushroom);
-// // 		m_Vehicle->AddToColladeList(pMushroom);
-// 
-// 		CWCone* pCone = new CWCone;
-// 		pCone->MyRef.Position = it->Triangles[0].GetPointByUV(0,0)+ Point3D(0,0,1);
-// 		pCone->MyRef.Y = it->Triangles[0].GetForwardDirection();
-// 		pCone->MyRef.X = pCone->MyRef.Y ^ pCone->MyRef.Z;
-// 
-// 		fs<<pCone->MyRef.Position<<endl;
-// 		fs<<pCone->MyRef.Y<<endl;
-// 		fs<<pCone->MyRef.X<<endl;
-// 		fs<<endl;
-// 		m_CarWorld->add(pCone);
-// 		m_Vehicle->AddToColladeList(pCone);
-// 	}
-// 	fs.close();
+ 	ofstream fs("Refs.txt");
+ 	CWLandscape* landscape = m_CarWorld->m_Landscape;
+ 	for(list<WorldBlock>::iterator it = landscape->MyWorldBlocks.begin(); it != landscape->MyWorldBlocks.end(); ++it)
+ 	{
+ 		CWMushrom* pMushroom = new CWMushrom;
+		pMushroom->MyRef.Position = it->Triangles[0].GetPointByUV(0,0) + Point3D(0,0,1);
+		pMushroom->MyRef.Y = it->Triangles[0].GetForwardDirection();
+ 		pMushroom->MyRef.X = pMushroom->MyRef.Y ^ pMushroom->MyRef.Z;
+ 		fs<<pMushroom->MyRef.Position<<endl;
+ 		fs<<pMushroom->MyRef.Y<<endl;
+		fs<<pMushroom->MyRef.X<<endl;
+		fs<<endl;
+		m_CarWorld->add(pMushroom);
+ 		m_Vehicle->AddToColladeList(pMushroom);
+		++it; // so that every other block has different collision
+        if(it==landscape->MyWorldBlocks.end())
+			break;
+		CWCone* pCone = new CWCone;
+ 		pCone->MyRef.Position = it->Triangles[0].GetPointByUV(0,0)+ Point3D(0,0,1);
+ 		pCone->MyRef.Y = it->Triangles[0].GetForwardDirection();
+		pCone->MyRef.X = pCone->MyRef.Y ^ pCone->MyRef.Z;
+
+ 		fs<<pCone->MyRef.Position<<endl;
+ 		fs<<pCone->MyRef.Y<<endl;
+		fs<<pCone->MyRef.X<<endl;
+		fs<<endl;
+		m_CarWorld->add(pCone);
+ 		m_Vehicle->AddToColladeList(pCone);
+ 	}
+ 	fs.close();
+	/*
 	CppSQLite3Query q = MyDatabase::shared_input_database()->execQuery("select * from CollideObjPosition;");
 
 	while(!q.eof())
@@ -570,25 +606,49 @@ void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 		if(q.fieldValue("tag")==string("cone"))
 		{
 			CWCone* pObj = new CWCone;
-			pObj->MyRef.Position = Point3D(q.getFloatField("x"),q.getFloatField("y"),q.getFloatField("z"));
-			pObj->MyRef.Y = Point3D(q.getFloatField("forwardx"),q.getFloatField("forwardy"),q.getFloatField("forwardz"));
-			pObj->MyRef.X = Point3D(q.getFloatField("rightx"),q.getFloatField("righty"),q.getFloatField("rightz"));
+			pObj->MyRef.Position = Point3D((REAL)q.getFloatField("x"),(REAL)q.getFloatField("y"),(REAL)q.getFloatField("z"));
+			pObj->MyRef.Y = Point3D((REAL)q.getFloatField("forwardx"),(REAL)q.getFloatField("forwardy"),(REAL)q.getFloatField("forwardz"));
+			pObj->MyRef.X = Point3D((REAL)q.getFloatField("rightx"),(REAL)q.getFloatField("righty"),(REAL)q.getFloatField("rightz"));
 
 			m_CarWorld->add(pObj);
-			m_Vehicle->AddToColladeList(pObj);		
+			m_Vehicle->AddToColladeList(pObj);
 		}
 		else if(q.fieldValue("tag")==string("mushroom"))
 		{
 			CWMushrom* pObj = new CWMushrom;
-			pObj->MyRef.Position = Point3D(q.getFloatField("x"),q.getFloatField("y"),q.getFloatField("z"));
-			pObj->MyRef.Y = Point3D(q.getFloatField("forwardx"),q.getFloatField("forwardy"),q.getFloatField("forwardz"));
-			pObj->MyRef.X = Point3D(q.getFloatField("rightx"),q.getFloatField("righty"),q.getFloatField("rightz"));
+			pObj->MyRef.Position = Point3D((REAL)q.getFloatField("x"),(REAL)q.getFloatField("y"),(REAL)q.getFloatField("z"));
+			pObj->MyRef.Y = Point3D((REAL)q.getFloatField("forwardx"),(REAL)q.getFloatField("forwardy"),(REAL)q.getFloatField("forwardz"));
+			pObj->MyRef.X = Point3D((REAL)q.getFloatField("rightx"),(REAL)q.getFloatField("righty"),(REAL)q.getFloatField("rightz"));
 
 			m_CarWorld->add(pObj);
-			m_Vehicle->AddToColladeList(pObj);		
+			m_Vehicle->AddToColladeList(pObj);
 		}
-
-
 		q.nextRow();
 	}
+	// tihs part is good, but I want to change road, so using the automatic for now
+	*/
+	//Xian added, for distractorse
+	// can be either sound play once, or text, shown for duration should be separate data base for location
+	// but for now fixed location
+	CppSQLite3Query q = MyDatabase::shared_input_database()->execQuery("select * from Distractor;");
+	while(!q.eof())
+	{
+		m_Vehicle->AddToDistractor((double)q.getFloatField("time"),(int)q.getFloatField("type"),q.fieldValue("content"),(int)q.getFloatField("duration"));
+		q.nextRow();
+	}
+	q = MyDatabase::shared_input_database()->execQuery("select * from COM;");
+	while(!q.eof())
+	{
+		if(q.fieldValue("tag")==string("Trigger")){
+			m_Vehicle->nirs.init(q.fieldValue("name"));
+		//	break;
+		}
+		if(q.fieldValue("tag")==string("EEG")){
+			m_Vehicle->eeg.init(q.fieldValue("name"));
+			break;
+		}
+		q.nextRow();
+	}
+	q = MyDatabase::shared_input_database()->execQuery("select * from parameters; where tag='biofeedback'");
+   	m_Vehicle->eeg.biofeedback=q.fieldValue("value")==string("T");
 }

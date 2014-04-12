@@ -8,7 +8,7 @@
 
 //#define DEFAULT_VEHICLE "data/Vehicles/82porsch.vhc"
 #define DEFAULT_VEHICLE "data/Vehicles/truck.vhc"
-#define DEFAULT_LANDSCAPE "data/Landscape/landscape.txt"
+//#define DEFAULT_LANDSCAPE "data/Landscape/landscape.txt"
 
 #define EARTH_GRAVITY 9.8f
 
@@ -19,7 +19,7 @@ class HWindow;
 class CarWorld
 {
 public:
-	CarWorld(int TimeRefreshRate, const char *LandscapeFile);
+	CarWorld(int TimeRefreshRate, const char *LandscapeFile,bool not_save);
 	~CarWorld();
 	void add(CWFeature* AFeature);
 	void addKeyboardRecorder(const char* recorder_name,HWindow* hwindow);
@@ -66,6 +66,7 @@ public:
 	bool draw_console;
 	bool draw_background;
 	Point3D LightDirection;
+	bool m_not_save;
 };
 
 #endif //__CAR_WORLD_H_

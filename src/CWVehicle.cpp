@@ -7,8 +7,8 @@
 #include "H_XML.h"
 #include <boost/bind.hpp>
 #include "CWBeeper.h"
+extern ofstream herr;
 
-//CLASS CWCommand
 CWCommand::CWCommand() : GasBrake(0), Steer(0), SteerFeedBack(0), HandBrake(false)
 {}
 
@@ -26,8 +26,8 @@ Wheel::Wheel(
 	REAL BrakeFactor,
 	REAL SteerFactor,
 	bool LockUp
-) :
-	RelPos(RelPos),
+	) :
+RelPos(RelPos),
 	SpringStiffness(SpringStiffness),
 	MaxTravel(MaxTravel),
 	MaxLoad(MaxLoad),
@@ -66,7 +66,7 @@ void Wheel::Set(const Ref &ARef, CWCommand &ACommand, CarWorld &CW)
 {
 	MyRef = ARef;
 
-//dissociate Gas from Break
+	//dissociate Gas from Break
 	REAL Gas = LIMIT(0.f,ACommand.GasBrake,1.f);
 	REAL Brake = LIMIT(0.f,-ACommand.GasBrake,1.f);
 	Lock = ACommand.HandBrake;
@@ -118,10 +118,10 @@ Point3D Wheel::CalcForce()
 		//only apply force if the susp is under load:
 		if (DeltaTravel>0)
 			Load = (SpringStiffness*Travel
-				+DamperCompression*DeltaTravel);
+			+DamperCompression*DeltaTravel);
 		else //DeltaTravel<0
 			Load = (SpringStiffness*Travel
-				+DamperRebound*DeltaTravel);
+			+DamperRebound*DeltaTravel);
 
 		if (Load>0)
 		{
@@ -185,6 +185,10 @@ CWVehicle::CWVehicle(const char *name)
 	MyRef = InertRef(Mass, MassDistrib);
 
 	load(name);
+	elapsed_time=0;
+	distractorN=0;
+	distractor.clear();
+	collisionTime=-10000.0; // so that the first collision alway happen
 }
 
 void CWVehicle::load(const char *name)
@@ -300,7 +304,7 @@ void CWVehicle::update()
 
 	static Point3D Gravity(0,0,-EARTH_GRAVITY);
 
-//Add the suspention forces:
+	//Add the suspention forces:
 	MyCommand.SteerFeedBack = 0;
 	for (vector<Wheel>::iterator I = Wheels.begin() ; I != Wheels.end() ; I++)
 	{
@@ -313,9 +317,9 @@ void CWVehicle::update()
 		}
 	}
 
-//gravity
+	//gravity
 	MyRef.Apply(FixedVector(MyRef.Position, Gravity*MyRef.GetMass()));
-//friction
+	//friction
 	MyRef.Apply(FixedVector(MyRef.Position, MyRef.Speed*(-Friction*MyRef.Speed.norm())));
 
 	MyRef.TimeClick();
@@ -323,7 +327,7 @@ void CWVehicle::update()
 	//make the rest of the car follow:
 	UpdateCWVehicleParams();
 
-//     Model.MyBox.VisitAllPoint(boost::bind(&CWVehicle::LocalPosToGlobalPos,this,_1));
+	//     Model.MyBox.VisitAllPoint(boost::bind(&CWVehicle::LocalPosToGlobalPos,this,_1));
 	CollisionTest();
 }
 
@@ -336,9 +340,9 @@ void CWVehicle::UpdateCWVehicleParams()
 {
 	for (vector<Wheel>::iterator I = Wheels.begin() ; I != Wheels.end() ; I++)
 		(*I).Set(
-			MyRef.GetRef((*I).RelPos),
-			MyCommand,
-			*m_CarWorld
+		MyRef.GetRef((*I).RelPos),
+		MyCommand,
+		*m_CarWorld
 		);
 }
 
@@ -353,7 +357,7 @@ void CWVehicle::draw_init()
 	{
 		(*I).draw_init();
 	}
-	
+
 	for(vector<CWBeeper>::iterator I = Beepers.begin(); I!= Beepers.end(); ++I)
 	{
 		I->init();
@@ -426,6 +430,11 @@ bool CWVehicle::is_vehicle_out_of_road()
 			return false;
 	}
 	AudioPlayer::shared_audio()->get_sound("Fall")->play_once();
+	nirs.on(elapsed_time);
+	CCrashRec temp;
+	temp.time=elapsed_time;
+	temp.type=0;
+	Crashrecord.push_back(temp);
 	return true;
 }
 
@@ -486,8 +495,12 @@ void CWVehicle::LocalPosToGlobalPos( Point3D& pt )const
 
 void CWVehicle::CollisionTest()
 {
+	if ( elapsed_time-collisionTime<1) // atleast 1 second
+		return;
+
 	Box3D box;
 	GetBox3D(box);
+	CCrashRec temp;
 	for(vector<CWColladeFeature*>::iterator it = m_ObjectsToCollade.begin(); it != m_ObjectsToCollade.end(); )
 	{
 		if(box.IsPtInside((*it)->GetPos()))
@@ -496,16 +509,29 @@ void CWVehicle::CollisionTest()
 			{
 				++m_MushroomCnt;
 				AudioPlayer::shared_audio()->get_sound("HitMushroom")->play_once();
+				nirs.on(elapsed_time); 
+				collisionTime=elapsed_time;
+				temp.time=elapsed_time;
+				temp.type=2;
+				Crashrecord.push_back(temp);
+				
 			}
 			else if((*it)->GetTag()==ECT_CONE)
 			{
 				++m_ConeCnt;
 				AudioPlayer::shared_audio()->get_sound("HitCone")->play_once();
+				nirs.on(elapsed_time); 
+				collisionTime=elapsed_time;
+				temp.time=elapsed_time;
+				temp.type=1;
+				Crashrecord.push_back(temp);
 			}
 
-			m_CarWorld->remove(*it);
-			it = m_ObjectsToCollade.erase(it);
-			continue;
+			//m_CarWorld->remove(*it);
+			//it = m_ObjectsToCollade.erase(it);
+			// now we do not have to delete them anymore
+			//continue;
+			return;
 		}
 		++it;
 	}
@@ -516,4 +542,30 @@ void CWVehicle::AddToColladeList( CWColladeFeature* object )
 	m_ObjectsToCollade.push_back(object);
 }
 
+void CWVehicle::updateTime(double t){ 
+	elapsed_time=t;
+	nirs.update(t);
+	eeg.update(t);
+	if (  distractorN >= distractor.size() || distractor[distractorN]->time>elapsed_time ) return;
+	switch (distractor[distractorN]->type){
+	case 0:
+		//herr<<" "<<distractor[distractorN]->time<<" "<<distractor[distractorN]->str<<endl;
+		AudioPlayer::shared_audio()->get_sound(distractor[distractorN++]->str)->play_once();
+		//AudioPlayer::shared_audio()->get_sound("HitCone")->play_once();
 
+		//distractorN++;
+		break;
+	case 1:
+		return;
+	}
+}
+
+void CWVehicle::AddToDistractor( const double t, const int tp, const char *c , const int dur)
+{
+	CDistractor *d=new CDistractor;
+	d->duration=dur;
+	d->str=string(c);
+	d->time=t;
+	d->type=tp;
+	distractor.push_back(d);
+}

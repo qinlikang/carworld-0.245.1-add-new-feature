@@ -34,7 +34,7 @@ set(gca, 'Interruptible', 'on'); set(gca, 'BusyAction', 'cancel')
 set(gca, 'DrawMode', 'fast') 
 set(gca, 'XLimMode', 'manual','YLimMode','manual', 'ZLimMode', 'manual')
 set(gcf, 'Renderer', 'painters'); set(gcf, 'DoubleBuffer','on')   % speeds up render, prevents blinking
-set(gcf,'Menubar','none')
+%set(gcf,'Menubar','none')
 
 waitfor(0, 'userdata') 
 outtrack = get(0, 'userdata'); 

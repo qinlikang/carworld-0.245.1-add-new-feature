@@ -18,7 +18,7 @@ using namespace std;
 class CarWorldClient : public HglApplication
 {
 public:
-	CarWorldClient(bool full_screen);
+	CarWorldClient(bool full_screen,bool not_save);
 	virtual ~CarWorldClient();
 //overrided inherited methods
 	const char* name();
@@ -58,6 +58,11 @@ public:
 public:
 	map<SDLKey,string> KeyBindings;
 private:
+	// start_time_mark;
+	bool start_time_mark;
+	//xian landscape name in db
+	const char *landscapename();
+	// end xian
 //graphics
 	Hgl_streambuf hbuf;
 	Hgl *m_Hgl;
