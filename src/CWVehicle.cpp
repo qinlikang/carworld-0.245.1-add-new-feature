@@ -527,7 +527,7 @@ void CWVehicle::CollisionTest()
 				// execute colliding script!
 				if(pCWC)
 				{
-					pCWC->execute_cfg((*it)->ScriptFile.c_str());
+					pCWC->exec_file((*it)->ScriptFile.c_str());
 				}
 				// record the hit count;
 				++m_HitCount[(*it)->GetTag()];

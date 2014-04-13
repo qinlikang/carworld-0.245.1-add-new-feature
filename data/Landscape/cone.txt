@@ -1,1 +1,1 @@
-playsound HitCone
+play_sound HitCone

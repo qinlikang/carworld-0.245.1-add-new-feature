@@ -43,13 +43,15 @@ public:
 	void set_joystick(bool use_joystick);
 	bool get_joystick();
 
-	void execute_cfg(const char *FileName);
-	void pars_command(const char *value);
+	void exec_file(const string& FileName);
+	void exec_command(const string& value);
 
 	void bind(SDLKey key,const char *command);
 
 	void print_help();
 	void print_version();
+
+	void init_script_engine();
 
 //connect to a network server
 	void join(const char *host, short port);
@@ -59,9 +61,9 @@ public:
 //add mode support, by LX, in different mode, we have different sets of keybind;
 	typedef map<SDLKey,string> KeyBindMap;
 	void ChangeMode(const string& mode);
-	map<string,KeyBindMap> m_ModesMap;
+	map<string,string> m_Modes;
 	string m_CurrentMode;
-	void AddMode(const string& mode, const KeyBindMap& modemap);
+	void AddMode(const string& mode, const string& script);
 	void CoutMode();
 //add object 
 	struct ObjectInfo
@@ -76,10 +78,13 @@ public:
 	vector<ObjectInfo> m_ObjectList;
 	void AddAObject(const string& tag,int width);// add object at current position
 	void DeleteNearestObject();
+	void ClearObjects();
 	void SavePointObjectInfo(); // save the object list into the database;
 	
 	// play a sound
 	void PlayASoundOnce(const string& sound);
+
+	string m_CurScriptDirectory;// the directory of current running script
 public:
 	map<SDLKey,string> KeyBindings;
 private:
@@ -108,6 +113,7 @@ private:
 	void AddColladeObjs( CarWorld * m_CarWorld );
 	map<int,CWVehicle*> m_Opponents;
 //CarWorld
+public:
 	CWVehicle *m_Vehicle;
 	CarWorld *m_CarWorld;
 };

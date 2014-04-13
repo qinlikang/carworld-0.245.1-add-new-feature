@@ -16,7 +16,9 @@
 #include "MyDatabase.h"
 #include "boost/foreach.hpp"
 #include "boost/format.hpp"
+#include "boost/filesystem.hpp"
 #include <ctime>
+#include "Utility.h"
 
 #define CLIENT_TIMEOUT 200
 extern ofstream herr;
@@ -36,7 +38,18 @@ public:
 	void exec(const Command &c)
 	{
 		if (c.size()==2)
-			CWC->execute_cfg(c[1].c_str());
+		{
+			using namespace boost::filesystem;
+			path abs_p(c[1]);
+			if(abs_p.is_absolute()&&exists(abs_p))// try abosulute path
+				CWC->exec_file(abs_p.string().c_str());
+			else 
+			{
+				path rele_p = CWC->m_CurScriptDirectory/abs_p;
+				if(exists(rele_p))// try relative path
+					CWC->exec_file(rele_p.string().c_str());
+			}
+		}
 		else
 			cout << "usage: exec <file>\n";
 	}
@@ -89,35 +102,35 @@ private:
 	CarWorldClient *CWC;
 };
 
-class Mode : public HExecutable
+class EX_ChangeMode : public HExecutable
 {
 public:
-	Mode(CarWorldClient *CWC) : CWC(CWC) {}
+	EX_ChangeMode(CarWorldClient *CWC) : CWC(CWC) {}
 	void exec(const Command &c)
 	{
 		if (c.size()==2)
 			CWC->ChangeMode(c[1]);
 		else
 		{
+			CWC->CoutMode();
 			cout << "usage: mode \"<mode-name>\"\n";
 			cout << "current available modes:\n";
-			map<string,CarWorldClient::KeyBindMap>::const_iterator it;
-			for(it=CWC->m_ModesMap.begin();it!=CWC->m_ModesMap.end();++it)
+			vector<string> modes= GetMapKeys(CWC->m_Modes);
+			BOOST_FOREACH(const string&_mode,modes)
 			{
-				cout<<it->first<<endl;
+				cout<<_mode<<endl;
 			}
-			CWC->CoutMode();
 		}
 
 	}
-	virtual ~Mode() {}
+	virtual ~EX_ChangeMode() {}
 private:
 	CarWorldClient *CWC;
 };
-class AddObject : public HExecutable
+class EX_AddObject : public HExecutable
 {
 public:
-	AddObject(CarWorldClient *CWC) : CWC(CWC) {}
+	EX_AddObject(CarWorldClient *CWC) : CWC(CWC) {}
 	void exec(const Command &c)
 	{
 		if (c.size()==2)
@@ -137,7 +150,7 @@ public:
 		}
 
 	}
-	virtual ~AddObject() {}
+	virtual ~EX_AddObject() {}
 private:
 	CarWorldClient *CWC;
 };
@@ -233,93 +246,23 @@ void CarWorldClient::draw_init()
 	FakeJoystick = new KeyJoystick(m_window);
 	CurrentJoystick = FakeJoystick;
 
-	cout << "\ninitiating command line parameters...\n";
-	HExecutableSet *m_HExecutableSet = new HExecutableSet();
-	m_HExecutableSet->add(new HVar<bool>("gl_finish", &Hgl::SetFinish,&Hgl::GetFinish));
-	m_HExecutableSet->add(new HVar<bool>("gl_vertex_arrays", &Hgl::SetVertexArrays,&Hgl::GetVertexArrays));
-	m_HExecutableSet->add(new HVar<bool>("gl_ext_compiled_vertex_array",&Hgl::SetExtCompiledVertexArrays,&Hgl::GetExtCompiledVertexArrays));
-	m_HExecutableSet->add(new HVar<int>("gl_shadows", &Hgl::SetShadows, &Hgl::GetShadows));
-	m_HExecutableSet->add(new HVar<Hgl::Enum>("gl_texturemode",&Hgl::SetTextureMode,&Hgl::GetTextureMode));
-	m_HExecutableSet->add(new HVar<bool>("gl_use_opt",&OFFObject::UseOptimizedDraw));
-	m_HExecutableSet->add(new HVar<bool>("draw_background",&(m_CarWorld->draw_background)));
-	m_HExecutableSet->add(new HVarObj<CarWorldClient,int>("r_mode", this, &CarWorldClient::set_r_mode,&CarWorldClient::get_r_mode));
-	m_HExecutableSet->add(new HVarObj<CarWorldClient,bool>("use_joystick",this, &CarWorldClient::set_joystick,&CarWorldClient::get_joystick));
-	m_HExecutableSet->add(new HVar<SDLKey>("accel",&(FakeJoystick->up_key)));
-	m_HExecutableSet->add(new HVar<SDLKey>("break",&(FakeJoystick->down_key)));
-	m_HExecutableSet->add(new HVar<SDLKey>("left",&(FakeJoystick->left_key)));
-	m_HExecutableSet->add(new HVar<SDLKey>("right",&(FakeJoystick->right_key)));
-	m_HExecutableSet->add(new HVar<SDLKey>("handbreak",&(FakeJoystick->button_key)));
+	// init scripting support
+	init_script_engine();
 
-
-	m_Executables["set"] = m_HExecutableSet;
-	m_Executables["join"] = new JoinServer(this);
-	m_Executables["bind"] = new BindKey(this);
-	m_Executables["reset"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::reset);
-	m_Executables["next_camera"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::next_camera);
-	m_Executables["record"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::record);
-	m_Executables["replay"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::replay);
-	m_Executables["off_recorder"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::off_recorder);
-	m_Executables["toggleconsole"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::toggleconsole);
-	m_Executables["help"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::print_help);
-	m_Executables["version"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::print_version);
-	m_Executables["exec"] = new ExecCFG(this);
-	m_Executables["dump"] = new MethodCall<OFFObject>(&m_Vehicle->Model,&OFFObject::debug_dump);
-	// XX addfog
-	m_Executables["fogUp"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_up);
-	m_Executables["fogDown"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_down);
-
-	m_Executables["zoom_in"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::zoom_in);
-	m_Executables["zoom_out"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::zoom_out);
-
-	m_Executables["show_box"] =  new BoostBindCall(	boost::bind(&CWVehicle::SetShowBox,m_Vehicle,true));
-	m_Executables["no_show_box"] =  new BoostBindCall(	boost::bind(&CWVehicle::SetShowBox,m_Vehicle,false));
-
-	// change mode
-	m_Executables["mode"] =  new Mode(this);
-
-	// add object
-	m_Executables["add"] =  new AddObject(this);
-	m_Executables["del"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::DeleteNearestObject);
-	m_Executables["save"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::SavePointObjectInfo);
-	
-	m_Executables["playsound"] = new EX_PlaySound(this);
-
-	// keybindings---------
-	// mode:play 
-	for(vector<CWBeeper>::iterator it = m_Vehicle->Beepers.begin(); it!= m_Vehicle->Beepers.end();++it)
+	// -------- loading supported modes
+	CppSQLite3DB* config = MyDatabase::shared_input_database();
+	CppSQLite3Query q = config->execQuery("select * from Mode;");
+	while(!q.eof())
 	{
-		m_Executables[it->BeeperName] = new BoostBindCall(boost::bind(&CWBeeper::beep,&(*it)));
-		bind(it->getSDLKeyBind(),it->BeeperName.c_str());
+		string _mode = q.fieldValue("mode");
+		string _script = q.fieldValue("script");
+		AddMode(_mode,_script);
+		q.nextRow();
 	}
-	bind(SDLK_TAB,"toggleconsole");
-	bind(SDLK_F2, "next_camera");
-	bind(SDLK_F3, "reset");
-	bind(SDLK_F4, "set use_joystick 1");
-	bind(SDLK_F5, "set use_joystick 0");
-	bind(SDLK_F6, "record");
-	bind(SDLK_F7, "replay");
-	bind(SDLK_F8, "off_recorder");
-	bind(SDLK_F9, "fogUp");
-	bind(SDLK_F10, "fogDown");
-	bind(SDLK_MINUS,"zoom_out");
-	bind(SDLK_EQUALS,"zoom_in");
-	bind(SDLK_n,"no_show_box");
-	bind(SDLK_b,"show_box");
-	execute_cfg(ConfigurationFileName());
-	AddMode("play",KeyBindings);
-
-	// mode: add
-	bind(SDLK_m,"add mushroom");
-	bind(SDLK_c,"add cone");
-	bind(SDLK_b,"add sobj 10");
-	bind(SDLK_d,"del");
-	bind(SDLK_s,"save");
-
-	AddMode("add",KeyBindings);
-
-
-	// change mode into play mode
+	// default mode is :play
 	ChangeMode("play");
+
+
 	// resource adjust
 	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Scale(Point3D(0.01f,0.01f,0.01f));
 	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Translate(Point3D(-1.0f,-1.f,0.f));
@@ -335,8 +278,10 @@ CarWorldClient::~CarWorldClient()
 {
 	//cout.rdbuf(&hbuf);
 	//state must be saved while graphics variables are still valid...
-	ofstream cfg_file(ConfigurationFileName(), ios::out);
-	write_cfg(cfg_file);
+
+	// we don't need this by LX
+//	ofstream cfg_file(ConfigurationFileName(), ios::out);
+//	write_cfg(cfg_file);
 
 	//cout.rdbuf(&hbuf);
 	delete FakeJoystick;
@@ -377,8 +322,12 @@ void CarWorldClient::toggleconsole()
 	m_CarWorld->pause_recorder_timer(IsPromptMode);
 }
 
-void CarWorldClient::execute_cfg(const char *FileName)
+void CarWorldClient::exec_file(const string&FileName)
 {
+	using namespace boost::filesystem;
+	path p(FileName);
+	m_CurScriptDirectory = p.parent_path().string();
+
 	cout << "executing " << FileName << "...\n";
 	char buffer[1024];
 	ifstream in(FileName, ios::in);
@@ -389,11 +338,11 @@ void CarWorldClient::execute_cfg(const char *FileName)
 	else while (!in.eof())
 	{
 		in.getline(buffer,1024);
-		pars_command(buffer);
+		exec_command(buffer);
 	}
 }
 
-void CarWorldClient::pars_command(const char *value)
+void CarWorldClient::exec_command(const string&value)
 {
 	Command ACommand(value);
 	try
@@ -503,13 +452,13 @@ void CarWorldClient::key_down(SDLKey AHKey, char c)
 	{
 		string ReturnedCommand(hbuf.HitKey(AHKey,c));
 		if (!ReturnedCommand.empty())
-			pars_command(ReturnedCommand.c_str());
+			exec_command(ReturnedCommand.c_str());
 	}
 	map<SDLKey,string>::iterator I = KeyBindings.find(AHKey);
 	if (I != KeyBindings.end()&&!IsPromptMode)// LX: to disable further process of keydown msg when using console.
-		pars_command((*I).second.c_str());
+		exec_command((*I).second.c_str());
 	else if(I != KeyBindings.end()&&IsPromptMode&&I->second=="toggleconsole")// LX: enable toggleconsole msg
-		pars_command((*I).second.c_str());
+		exec_command((*I).second.c_str());
 	//else
 	//	cout << "\"" << KeyMap.find(AHKey) << "\" key unbound\n";
 }
@@ -740,37 +689,28 @@ void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 
 void CarWorldClient::ChangeMode( const string& mode )
 {
-	if(m_ModesMap.find(mode)==m_ModesMap.end())
+	if(m_CurrentMode==mode) return;
+	if(m_Modes.find(mode)==m_Modes.end())
 	{
 		// log error
-		cout<<"mode ["+mode+"] not exist, type mode to see what are supported"<<endl;
+		cout<<"mode ["+mode+"] not exist"<<endl;
+		exec_command("mode");
 		return;
 	}
 	m_CurrentMode=mode;
-	KeyBindings=m_ModesMap[mode];
-	if(mode=="play")
-	{
-		m_Vehicle->bFakeCar=false;
-	}
-	else if(mode=="add")
-	{
-		// clear all existing object
-		m_Vehicle->m_ObjectsToCollade.clear();
-		m_Vehicle->bFakeCar=true;
-		m_CarWorld->remove_all_collide_objects();
-	}
+	KeyBindings.clear();
+	exec_file(m_Modes[mode]);
 }
 
-void CarWorldClient::AddMode( const string& mode, const KeyBindMap& modemap )
+void CarWorldClient::AddMode( const string& mode, const string& script )
 {
 	if(mode.empty())return;
-	m_ModesMap[mode]=modemap;
-	CoutMode();
+	m_Modes[mode]=script;
 }
 
 void CarWorldClient::CoutMode()
 {
-	cout<<"current mode ["+m_CurrentMode+"]";
+	cout<<"current mode ["+m_CurrentMode+"]"<<endl;
 }
 
 void CarWorldClient::AddAObject( const string& tag ,int width)
@@ -838,4 +778,60 @@ void CarWorldClient::SavePointObjectInfo()
 void CarWorldClient::PlayASoundOnce( const string& sound )
 {
 	AudioPlayer::shared_audio()->get_sound(sound)->play_once();
+}
+
+void CarWorldClient::ClearObjects()
+{
+	m_ObjectList.clear();
+	// clear all existing object
+	m_Vehicle->m_ObjectsToCollade.clear();
+	m_CarWorld->remove_all_collide_objects();
+}
+
+void CarWorldClient::init_script_engine()
+{
+	// variables that can access
+	HExecutableSet *m_HExecutableSet = new HExecutableSet();
+	m_HExecutableSet->add(new HVar<bool>("gl_finish", &Hgl::SetFinish,&Hgl::GetFinish));
+	m_HExecutableSet->add(new HVar<bool>("gl_vertex_arrays", &Hgl::SetVertexArrays,&Hgl::GetVertexArrays));
+	m_HExecutableSet->add(new HVar<bool>("gl_ext_compiled_vertex_array",&Hgl::SetExtCompiledVertexArrays,&Hgl::GetExtCompiledVertexArrays));
+	m_HExecutableSet->add(new HVar<int>("gl_shadows", &Hgl::SetShadows, &Hgl::GetShadows));
+	m_HExecutableSet->add(new HVar<Hgl::Enum>("gl_texturemode",&Hgl::SetTextureMode,&Hgl::GetTextureMode));
+	m_HExecutableSet->add(new HVar<bool>("gl_use_opt",&OFFObject::UseOptimizedDraw));
+	m_HExecutableSet->add(new HVar<bool>("draw_background",&(m_CarWorld->draw_background)));
+	m_HExecutableSet->add(new HVarObj<CarWorldClient,int>("r_mode", this, &CarWorldClient::set_r_mode,&CarWorldClient::get_r_mode));
+	m_HExecutableSet->add(new HVarObj<CarWorldClient,bool>("use_joystick",this, &CarWorldClient::set_joystick,&CarWorldClient::get_joystick));
+	m_HExecutableSet->add(new HVar<SDLKey>("accel",&(FakeJoystick->up_key)));
+	m_HExecutableSet->add(new HVar<SDLKey>("break",&(FakeJoystick->down_key)));
+	m_HExecutableSet->add(new HVar<SDLKey>("left",&(FakeJoystick->left_key)));
+	m_HExecutableSet->add(new HVar<SDLKey>("right",&(FakeJoystick->right_key)));
+	m_HExecutableSet->add(new HVar<SDLKey>("handbreak",&(FakeJoystick->button_key)));
+	m_HExecutableSet->add(new HVar<bool>("use_fakecar",&m_Vehicle->bFakeCar));
+
+	// commands that can use
+	m_Executables["set"] = m_HExecutableSet;
+	m_Executables["join"] = new JoinServer(this);
+	m_Executables["bind"] = new BindKey(this);
+	m_Executables["reset"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::reset);
+	m_Executables["next_camera"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::next_camera);
+	m_Executables["record"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::record);
+	m_Executables["replay"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::replay);
+	m_Executables["off_recorder"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::off_recorder);
+	m_Executables["toggleconsole"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::toggleconsole);
+	m_Executables["help"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::print_help);
+	m_Executables["version"] = new MethodCall<CarWorldClient>(this,&CarWorldClient::print_version);
+	m_Executables["exec"] = new ExecCFG(this);
+	m_Executables["dump"] = new MethodCall<OFFObject>(&m_Vehicle->Model,&OFFObject::debug_dump);
+	m_Executables["fogUp"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_up);
+	m_Executables["fogDown"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::fog_down);
+	m_Executables["zoom_in"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::zoom_in);
+	m_Executables["zoom_out"] = new MethodCall<CarWorld>(m_CarWorld,&CarWorld::zoom_out);
+	m_Executables["show_box"] =  new BoostBindCall(	boost::bind(&CWVehicle::SetShowBox,m_Vehicle,true));
+	m_Executables["no_show_box"] =  new BoostBindCall(	boost::bind(&CWVehicle::SetShowBox,m_Vehicle,false));
+	m_Executables["mode"] =  new EX_ChangeMode(this);
+	m_Executables["add_obj"] =  new EX_AddObject(this);
+	m_Executables["del_obj"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::DeleteNearestObject);
+	m_Executables["clear_objs"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::ClearObjects);
+	m_Executables["save_objs"] =   new MethodCall<CarWorldClient>(this,&CarWorldClient::SavePointObjectInfo);
+	m_Executables["play_sound"] = new EX_PlaySound(this);
 }

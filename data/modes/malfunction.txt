@@ -1,0 +1,5 @@
+exec play.txt
+set accel "DOWN" 
+set break "UP" 
+set left "RIGHT" 
+set right "LEFT"

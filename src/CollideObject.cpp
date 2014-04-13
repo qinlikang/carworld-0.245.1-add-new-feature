@@ -12,7 +12,7 @@ void CWPointObject::draw_init()
 
 void CWPointObject::draw()
 {
-	if(pCWC->m_CurrentMode=="add")
+	if(pCWC->m_Vehicle->bFakeCar)
 		drawColliding();
 	if(MyMesh)
 	{
