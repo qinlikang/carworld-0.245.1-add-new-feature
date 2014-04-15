@@ -72,11 +72,11 @@ public:
 		Point3D position;
 		Point3D forward;
 		Point3D right;
-		int width;
+		float width;
 		CWPointObject* pObject;
 	};
 	vector<ObjectInfo> m_ObjectList;
-	void AddAObject(const string& tag,int width);// add object at current position
+	void AddAObject(const string& tag,float width);// add object at current position
 	void DeleteNearestObject();
 	void ClearObjects();
 	void SavePointObjectInfo(); // save the object list into the database;

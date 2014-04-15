@@ -378,7 +378,7 @@ void CWVehicle::draw_init()
 
 void CWVehicle::draw()
 {
-	if (Hgl::GetShadows()>0)
+	if (Hgl::GetShadows()>0&&!bFakeCar)
 		ProjectShadow(m_CarWorld->LightDirection);
 	drawShape();
 }
@@ -390,7 +390,17 @@ void CWVehicle::drawShape()
 		(*I).draw();
 
 	if(bFakeCar)
+	{
+		Ref ref = MyRef.GetRef(Point3D(0,0,0));
+		glPushMatrix();
+		Hgl::Relocate(ref);
+		glDisable(GL_LIGHTING);
+		glColor3f(.0f,.0f,.0f);
+		Model.MyBox.DrawFrame();
+		glEnable(GL_LIGHTING);
+		glPopMatrix();
 		return;
+	}
 
 	//don't draw the body if we are using this car's interior-camera
 	InCarCam* InCam = dynamic_cast<InCarCam*>(m_CarWorld->m_Camera);
@@ -510,19 +520,25 @@ void CWVehicle::LocalPosToGlobalPos( Point3D& pt )const
 
 void CWVehicle::CollisionTest()
 {
-	if ( elapsed_time-collisionTime<1) // atleast 1 second
-		return;
+	// by LX:
+	// i'm now using m_ObjIsColliding to keep collision happen only once.
+	// this statement takes me 2 hour to debug this problem. 
+	// if we do collision to slow, then ,if two object close enough, the second collision would not be detected.
+	// so, if you can keep objects away from each other so that the car would not pass two of them in a second, then this code is ok.
+// 	if ( elapsed_time-collisionTime<1) // atleast 1 second 
+// 		return;
 	if(bFakeCar)// we do not do colliding test when it's a fake car.
 		return;
 
 	Box3D box;
 	GetBox3D(box);
 	CCrashRec temp;
+	static void* pRem=NULL;
 	for(vector<CWPointObject*>::iterator it = m_ObjectsToCollade.begin(); it != m_ObjectsToCollade.end(); )
 	{
 		if((*it)->IsCollideWithBox(box))
 		{
-			if(!m_ObjIsColliding[(*it)])// it is not collided before
+			if(!m_ObjIsColliding[(*it)])// it is not in colliding state
 			{
 				// execute colliding script!
 				if(pCWC)
@@ -531,9 +547,8 @@ void CWVehicle::CollisionTest()
 				}
 				// record the hit count;
 				++m_HitCount[(*it)->GetTag()];
+				m_ObjIsColliding[(*it)]=true;
 			}
-			m_ObjIsColliding[(*it)]=true;
-
 
 			if((*it)->GetTag()=="mushroom")
 			{

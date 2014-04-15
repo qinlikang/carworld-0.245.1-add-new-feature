@@ -12,12 +12,18 @@ void CWPointObject::draw_init()
 
 void CWPointObject::draw()
 {
-	if(pCWC->m_Vehicle->bFakeCar)
-		drawColliding();
+	glDisable(GL_LIGHTING);
+	glDisable(GL_CULL_FACE);
 	if(MyMesh)
 	{
 		MyMesh->draw(MyRef);
 	}
+	if(pCWC->m_Vehicle->bFakeCar)
+	{
+		drawColliding();
+	}
+	glEnable(GL_LIGHTING);
+	glEnable(GL_CULL_FACE);
 }
 
 
@@ -30,6 +36,7 @@ void CWPointObject::drawColliding()
 
 	glPointSize(5.0);   //设置点大小，不能再glBegin和glEnd之间
 	glLineWidth(3.0);
+	glDisable(GL_DEPTH_TEST);
 	glBegin(GL_POINTS);  //mode为GL_POINTS
 	glColor3f(1.0,1.0,1.0); //设置点颜色
 	glVertex3fv(MyRef.Position.p);
@@ -38,6 +45,7 @@ void CWPointObject::drawColliding()
 	glVertex3fv(pt1.p);
 	glVertex3fv(pt2.p);
 	glEnd();
+	glEnable(GL_DEPTH_TEST);
 
 	glPopMatrix();	
 }
@@ -61,7 +69,7 @@ static bool IsFaceInsectSegment(const REAL face[4],const REAL bound1[4],const RE
 
 bool CWPointObject::IsCollideWithBox( const Box3D& box ) const
 {
-	if(Width==0)
+	if(abs(Width)<0.0001)
 	{
 		return box.IsPtInside(GetPos());
 	}

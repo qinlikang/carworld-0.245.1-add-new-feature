@@ -136,7 +136,7 @@ public:
 		if (c.size()==2)
 			CWC->AddAObject(c[1],0);
 		else if(c.size()==3)
-			CWC->AddAObject(c[1],atoi(c[2].c_str()));
+			CWC->AddAObject(c[1],atof(c[2].c_str()));
 		else
 		{
 			cout << "usage: add_obj \"<off-file-tag>\" \"[width]\"\n";
@@ -261,17 +261,6 @@ void CarWorldClient::draw_init()
 	}
 	// default mode is :play
 	ChangeMode("play");
-
-
-	// resource adjust
-	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Scale(Point3D(0.01f,0.01f,0.01f));
-	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Translate(Point3D(-1.0f,-1.f,0.f));
-	OFFObjectPool::sharedOFFPool()->getMesh("mushroom")->Rotate(Point3D(-PI/2,0,0));
-
-	OFFObjectPool::sharedOFFPool()->getMesh("cone")->Scale(Point3D(0.01f,0.01f,0.01f));
-	OFFObjectPool::sharedOFFPool()->getMesh("cone")->Translate(Point3D(-1.0f,-0.3f,0.f));
-	OFFObjectPool::sharedOFFPool()->getMesh("cone")->Rotate(Point3D(-PI/2,0,0));
-
 }
 
 CarWorldClient::~CarWorldClient()
@@ -654,7 +643,7 @@ void CarWorldClient::AddColladeObjs( CarWorld * m_CarWorld )
 		pObj->MyRef.Position = Point3D((REAL)q.getFloatField("x"),(REAL)q.getFloatField("y"),(REAL)q.getFloatField("z"));
 		pObj->MyRef.Y = Point3D((REAL)q.getFloatField("forwardx"),(REAL)q.getFloatField("forwardy"),(REAL)q.getFloatField("forwardz"));
 		pObj->MyRef.X = Point3D((REAL)q.getFloatField("rightx"),(REAL)q.getFloatField("righty"),(REAL)q.getFloatField("rightz"));
-		pObj->Width = (int)q.getFloatField("width");
+		pObj->Width = (REAL)q.getFloatField("width");
 		m_CarWorld->add(pObj);
 		m_Vehicle->AddToColladeList(pObj);
 
@@ -713,13 +702,14 @@ void CarWorldClient::CoutMode()
 	cout<<"current mode ["+m_CurrentMode+"]"<<endl;
 }
 
-void CarWorldClient::AddAObject( const string& tag ,int width)
+void CarWorldClient::AddAObject( const string& tag ,float width)
 {
 	Ref& ref = m_Vehicle->MyRef;
 	
 	CWPointObject* pObj = new CWPointObject;
 	pObj->SetTag(tag);
 	pObj->MyRef = ref;
+	pObj->MyRef.Position = m_Vehicle->GetCenterPos();
 	m_CarWorld->add(pObj);
 	m_Vehicle->AddToColladeList(pObj);
 	pObj->Width=width;
@@ -767,7 +757,7 @@ void CarWorldClient::SavePointObjectInfo()
 	string sql;
 	BOOST_FOREACH(ObjectInfo& info,m_ObjectList)
 	{
-		format fmt = format("insert into CollideObjPosition values(%d,'%s',%f,%f,%f,%f,%f,%f,%f,%f,%f);")
+		format fmt = format("insert into CollideObjPosition values(%f,'%s',%f,%f,%f,%f,%f,%f,%f,%f,%f);")
 			%info.width %info.tag %info.position.x() %info.position.y() %info.position.z() %info.forward.x() %info.forward.y() %info.forward.z()
 			%info.right.x() %info.right.y() %info.right.z() ;
 		sql+=fmt.str();

@@ -1,0 +1,11 @@
+function retobj = process_default(obj,scale)
+retobj = obj;
+retobj.Vertex(3,:) = obj.Vertex(2,:);
+retobj.Vertex(2,:) = obj.Vertex(3,:);
+retobj = scale_off(retobj,0.01*scale);
+minXYZ=min(retobj.Vertex');
+maxXYZ=max(retobj.Vertex');
+center = (minXYZ+maxXYZ)/2;
+npt=size(retobj.Vertex,2);
+retobj.Vertex = retobj.Vertex-repmat(center',1,npt); 
+width = (maxXYZ(1)-minXYZ(1))

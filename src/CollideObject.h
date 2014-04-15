@@ -36,7 +36,7 @@ public:
 	Ref MyRef;
 	OFFObject* MyMesh;
 	std::string ScriptFile;
-	int Width; // add segment colliding support
+	float Width; // add segment colliding support
 private:
 	std::string m_tag;
 };
