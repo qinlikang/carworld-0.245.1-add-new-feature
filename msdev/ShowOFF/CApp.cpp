@@ -255,10 +255,11 @@ int main( int argc, char* argv[] )
 		g_pOffObj = new OFFObject();
 		g_pOffObj->readfile(argv[1]);
 	}
-	catch(...)
+	catch(HException& e)
 	{
 		delete g_pOffObj;
 		g_pOffObj=NULL;
+		throw e;
 	}
 
 	// camera's axises are where it see the original axises

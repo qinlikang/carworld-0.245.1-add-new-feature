@@ -1,13 +1,13 @@
 %load mushroom
 %im=imread('mushroom.jpg');
-load cone
-im=imread('cone.jpg');
+load billboard
+im=imread('billboard.jpg');
 X=xy(:,1);
 Y=xy(:,2);
 %fid=fopen('mushroom.off','w');
 %fprintf(fid,'OFF2\nmushroom.png\n');
-fid=fopen('cone.off','w');
-fprintf(fid,'OFF2\ncone.png\n');
+fid=fopen('billboard.off','w');
+fprintf(fid,'OFF2\nbillboard.png\n');
 nv=length(X);
 nf=1;
 nfv=nv
