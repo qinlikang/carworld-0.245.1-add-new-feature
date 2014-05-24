@@ -1,7 +1,8 @@
 %load mushroom
 %im=imread('mushroom.jpg');
 load billboard
-im=imread('billboard.jpg');
+im=imread('billboard.png');
+im=permute(im,[2,1,3]);
 X=xy(:,1);
 Y=xy(:,2);
 %fid=fopen('mushroom.off','w');

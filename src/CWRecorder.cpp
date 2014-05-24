@@ -6,6 +6,7 @@
 #include <fstream>
 #include "H_Main.h"
 #include "MyDatabase.h"
+#include "CommandOption.h"
 
 CWRecorder::CWRecorder(RecorderState state)
 	:m_RecorderState(state)
@@ -159,7 +160,7 @@ std::string VehicleStateRecorder::dump()
 	);
 
 	// using the table name as the fle name to generate a data file
-	 fmt = format("Records\\%s")%table;
+	 fmt = format(CommandOption::Option().OutDir+"\\%s")%table;
 	ofstream outf(fmt.str().c_str());
 
 
@@ -250,7 +251,7 @@ std::string KeyboardInputRecorder::dump()
 		fmt.str().c_str()
 		);
 
-	 fmt = format("Records\\%s")%table;
+	 fmt = format(CommandOption::Option().OutDir+"\\%s")%table;
 	
 	ofstream outf(fmt.str().c_str());
 

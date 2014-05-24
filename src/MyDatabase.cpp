@@ -1,12 +1,7 @@
 #include "MyDatabase.h"
 #include "H_Standard.h"
 #include <boost/filesystem.hpp>
-
-const char* g_in_database_dir="./data/";
-const char* g_out_database_dir="./Records/";
-
-const char* g_in_database_name="carworld.db";
-const char* g_out_database_name="record.db";
+#include "CommandOption.h"
 
 MyDatabase::MyDatabase( const char* dir,const char* file, bool force/*=false*/ )
 {
@@ -14,19 +9,28 @@ MyDatabase::MyDatabase( const char* dir,const char* file, bool force/*=false*/ )
 	// need compile the boost.filesystem to get the static lib.
 	using namespace boost::filesystem;
 	path p(dir);
+	path fullname(p);
+	fullname.append(file,file+strlen(file));
+	string fname=fullname.string();
+
+	m_bOpened=false;
 
 	if(force)
 	{
 		try
 		{
-			if(is_directory(p)&&!exists(p))
+			if(portable_directory_name(p.string()) && !exists(p))
 			{
 				// create the folder
 				create_directories(p);
 			}
-			else if(!is_directory(p))
+			else if(exists(p) && !is_directory(p))
 			{
-				throw HException("the specified parameter isn't a directory!");
+				throw HException("the specified directory already exist as a file : "+p.string());
+			}
+			else if(!portable_directory_name(p.string()))
+			{
+				throw HException(p.string()+" is not a portable directory name");
 			}
 		}
 		catch(HException& e)
@@ -42,22 +46,43 @@ MyDatabase::MyDatabase( const char* dir,const char* file, bool force/*=false*/ )
 		{
 			throw HException("not portable file name:");
 		}
+
+		if(!exists(fullname))// if not exists, just create it
+		{
+			ofstream of(fname);
+			of.close();
+		}
 	}
 
-	p.append(file,file+strlen(file));
-
-	m_DB.open(p.string().c_str());
+	if(!exists(fullname))
+	{
+		throw HException("Database file doesn't exist : "+fname);
+	}
+	else
+	{
+		try
+		{
+			m_DB.open(fname.c_str());
+			m_bOpened=true;
+		}
+		catch (CppSQLite3Exception& e)
+		{
+			throw HException(string("Open database error : ")+e.errorMessage());
+		}
+	}
 }
 
 CppSQLite3DB* MyDatabase::shared_input_database()
 {
-	static MyDatabase global_in_db(g_in_database_dir,g_in_database_name,false);
+	if(!CommandOption::Option().bIsInit)return NULL;
+	static MyDatabase global_in_db(CommandOption::Option().InDir.c_str(),CommandOption::Option().InDatabaseFile.c_str(),false);
 	return global_in_db.get_db();
 }
 
 CppSQLite3DB* MyDatabase::shared_output_database()// used to output records
 {
-	static MyDatabase global_out_db(g_out_database_dir,g_out_database_name,true);
+	if(!CommandOption::Option().bIsInit)return NULL;
+	static MyDatabase global_out_db(CommandOption::Option().OutDir.c_str(),CommandOption::Option().OutDatabaseFile.c_str(),true);
 	CppSQLite3DB* db = global_out_db.get_db();
 	if(!db->tableExists("RecordSummary"))
 	{
@@ -70,4 +95,12 @@ CppSQLite3DB* MyDatabase::shared_output_database()// used to output records
 MyDatabase::~MyDatabase( void )
 {
 
+}
+
+CppSQLite3DB* MyDatabase::get_db()
+{
+	if(m_bOpened)
+		return &m_DB;
+	else 
+		return NULL;
 }

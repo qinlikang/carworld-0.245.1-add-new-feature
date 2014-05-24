@@ -10,6 +10,7 @@ SoundPlayer::SoundPlayer( void)
 	:m_Chunk(NULL)
 {
 	m_nChannel = GetMixer().AddOneChannel()-1;
+	Mix_Volume(m_nChannel,128);
 }
 
 
@@ -64,7 +65,9 @@ SoundPlayer::EBeeperState SoundPlayer::get_state() const
 void SoundPlayer::play_n_times( unsigned int ntime )
 {
 	if(m_Chunk)
+	{
 		Mix_PlayChannel(m_nChannel,m_Chunk,ntime);
+	}
 }
 
 void CWBeeper::init()
