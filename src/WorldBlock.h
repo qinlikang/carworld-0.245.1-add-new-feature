@@ -38,6 +38,14 @@ public:
 		void SetMaterial(int FillMode);
 		OFFObject::Polygon toOFFPolygon() const;
 
+		// add by LX
+		bool IsLeftBorderTriangle()const{return MyI%2==0;}
+		bool GetInsidePointUVParameter(const Point2D& inside_pt,double& u, double& v) ; // u (-1,1), v(0,1)
+		Point3D GetPointByUV(const double& u,const double& v) ; // u (-1,1), v(0,1)
+		Point3D GetForwardDirection();
+
+		// end of adding
+
 	//private:
 		Point3D *Corner1;
 		Point3D *Corner2;

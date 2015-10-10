@@ -10,6 +10,7 @@ using namespace std;
 #include <iostream>
 #include "H_Keys.h"
 #include "H_Standard.h"
+#include <SDL_events.h>
 
 #define BH_DEFAULT_X 100
 #define BH_DEFAULT_Y 100
@@ -89,6 +90,10 @@ public:
 	virtual void draw() = 0;
 	virtual void key_down(SDLKey AHKey, char c) = 0;
 	virtual void resize(unsigned int width, unsigned int height) = 0;
+
+	virtual void mouse_motion(const SDL_MouseMotionEvent& event) = 0;
+	virtual void mouse_wheel(const SDL_MouseButtonEvent& event) = 0;
+
 public:
 //OS specific window
 	HWindow *m_window;

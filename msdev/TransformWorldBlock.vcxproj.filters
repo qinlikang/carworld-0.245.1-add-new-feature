@@ -39,6 +39,9 @@
     </ClCompile>
     <ClCompile Include="..\src\WorldBlock.cpp" />
     <ClCompile Include="..\src\TransformWorldBlock.cpp" />
+    <ClCompile Include="..\src\Box3D.cpp">
+      <Filter>Generic</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\automat.h">
@@ -75,5 +78,8 @@
       <Filter>Generic</Filter>
     </ClInclude>
     <ClInclude Include="..\src\WorldBlock.h" />
+    <ClInclude Include="..\src\Box3D.h">
+      <Filter>Generic</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

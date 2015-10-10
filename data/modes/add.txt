@@ -1,0 +1,9 @@
+exec play.txt
+set use_fakecar "1"
+clear_objs
+bind b "add_obj sobj 10"
+bind c "add_obj cone 1.88"
+bind d "del_objs"
+bind s "save_objs"
+bind m "add_obj mushroom 2"
+bind l "add_obj billboard 10"

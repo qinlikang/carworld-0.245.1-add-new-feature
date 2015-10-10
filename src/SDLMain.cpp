@@ -18,6 +18,13 @@
 
 #include <SDL.h>
 
+#include "CWMixerManager.h"
+#include "CWBeeper.h"
+#include "OFFObjectPool.h"
+
+#include <boost/program_options.hpp>
+#include "CommandOption.h"
+
 HWindow::~HWindow() {}
 HJoystick::~HJoystick(){}
 
@@ -160,14 +167,53 @@ int find(int argc, char **argv, const char *v)
 
 extern ofstream herr;
 
+CarWorldClient* pCWC=NULL;
+
+MixerManagerSingleton mixer;
+//char g_in_database_name[1000];
 int main(int argc, char *argv[])
 {
 	streambuf* cout_streambuf = cout.rdbuf();
 	HglApplication* app = NULL;
 	try
 	{
-		bool full_screen = find(argc,argv,"-f")!=argc;
-		HglApplication* app = new CarWorldClient(full_screen);
+		bool full_screen=false;
+		bool not_save=false;
+
+		// init command line options
+		namespace po = boost::program_options;
+		po::options_description desc("Allowed options");
+		desc.add_options()
+			("help,h","produce help message")
+			("fullscreen,f","set fullscreen")
+			("discard,n","discard the record data")
+			("in-db,i",po::value<string>(&(CommandOption::Option().InDatabaseFile)),"input database.")
+			("out-db,o",po::value<string>(&(CommandOption::Option().OutDatabaseFile)),"output database.")
+			("in-dir,I",po::value<string>(&(CommandOption::Option().InDir)),"input search directory")
+			("out-dir,O",po::value<string>(&(CommandOption::Option().OutDir)),"output directory")
+			;
+		po::variables_map vm;
+
+		try
+		{
+
+			po::store(po::parse_command_line(argc,argv,desc),vm);
+			po::notify(vm);
+		}
+		catch(po::error& e)
+		{
+			cout<<"error: "<<e.what()<<endl;
+			cout<<desc<<"\n";
+			return 1;
+		}
+
+		if(vm.count("help")){cout<<desc<<"\n";return 1;}
+		else if(vm.count("fullscreen")){full_screen=true;}
+		else if(vm.count("discard")){not_save=true;}
+
+		CommandOption::Option().CheckOptions();// check the options
+		
+		HglApplication* app = pCWC = new CarWorldClient(full_screen,not_save);
 
 		{
 			SDL_version CompileVer;
@@ -210,10 +256,23 @@ int main(int argc, char *argv[])
 		}
 		SDL_WM_SetCaption(app->name(), app->name());
 		
+		// init SDL_Mixer
+		if(GetMixer().Init()==-1)
+		{
+			cout << "ERROR: Couldn't initiate sdl_mixer "<< endl;
+			cout << GetMixer().GetError()<<endl;
+			return 3;
+		}
+
 	//do OpenGL init
 		app->draw_init();
 		app->resize(screen->w, screen->h);
 
+		//load the chunks
+		AudioPlayer::shared_audio()->load_from_db();
+		AudioPlayer::shared_audio()->get_sound("Background")->play_n_times(-1);
+
+		
 		bool done = false;
 		Uint32 CurrentTime = SDL_GetTicks();
 		while (!done)
@@ -246,7 +305,19 @@ int main(int argc, char *argv[])
 						app->resize(event.resize.w, event.resize.h);
 					}
 					break;
-					
+				case SDL_MOUSEMOTION:
+					{
+						app->mouse_motion(event.motion);
+					}
+					break;
+				case SDL_MOUSEBUTTONDOWN:
+					{
+						if(event.button.button==SDL_BUTTON_WHEELDOWN || event.button.button==SDL_BUTTON_WHEELUP)
+						{
+							app->mouse_wheel(event.button);
+						}
+						break;
+					}
 				case SDL_QUIT:
 					done = true;
 					break;
@@ -257,9 +328,12 @@ int main(int argc, char *argv[])
 			CurrentTime = NewTime;
 			app->draw();
 		}
+		OFFObjectPool::release();
 		delete app;
-		app = NULL;
+		app = pCWC = NULL;
 		cout.rdbuf(cout_streambuf);
+		AudioPlayer::release_audio();
+		GetMixer().Quit();
 		SDL_Quit();
 		return 0;
 	}
@@ -275,7 +349,6 @@ int main(int argc, char *argv[])
 	//free resources
 	//we do this last in case it crashes...
 		delete app;
-
 		return 1;
 	}
 }

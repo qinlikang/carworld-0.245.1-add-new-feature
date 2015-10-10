@@ -3,8 +3,12 @@
 #define __CW_VEHICLE_H_
 
 #include "CarWorldClasses.h"
-
-
+#include "CWBeeper.h"
+#include "NirsTrigger.h"
+#include "Brain.h"
+#include "CollideObject.h"
+#include <fstream>
+#include <vector>
 class CWVehicle;
 
 //describes the state of the vehicle controls
@@ -86,14 +90,27 @@ struct CWVehicleState
 	Ref m_Ref;
 	CWCommand m_Command;
 };
-
-class CWVehicle : public CWFeature
+struct CCrashRec
+{
+	double time;
+	int type; // 0 crash, 1 cone, 2 mushroom, 
+};
+struct CDistractor
+{
+	double time;
+	int type; // 0 music, 1 text
+	string str;
+	int duration; // 0 music no meaning, but text will disappear later
+};
+class CWVehicle : public CWFeature, public CollideObjectInterface
 {
 public:
 	CWVehicle(const char *name);
 	void load(const char *name);
 	virtual ~CWVehicle();
 	void reset();
+	void reset_to_fall_block();
+	bool is_vehicle_out_of_road();
 	void update();
 	REAL GetSpeed() const; //returns speed in kph
 
@@ -109,6 +126,18 @@ public:
 
 	CWVehicleState GetState();
 	void SetState(CWVehicleState &state);
+
+	void LocalPosToGlobalPos(Point3D& pt)const;
+
+	// for collision test
+	Point3D GetCenterPos()const;
+	void GetBox3D(Box3D& box)const;
+	bool IsPointInside(const Point3D& pt) const;
+	void CollisionTest();
+	bool bFakeCar;// if set true, we only draw wheels, and not do collision
+
+	// for box
+	void SetShowBox(bool show){m_bShowBox = show;}
 public:
 //read in the configuration file
 	string ModelFile;
@@ -131,6 +160,34 @@ public:
 	InertRef MyRef;
 	vector<Wheel> Wheels;
 	OFFObject Model;
+	vector<CWBeeper> Beepers;
+
+	WorldBlock* LastHitBlock;
+
+	// bonus and punish
+	vector<CWPointObject*> m_ObjectsToCollade;
+	void AddToColladeList(CWPointObject* object);
+	void RemoveFromeCollideList(CWPointObject* object);
+	std::map<std::string,unsigned int> m_HitCount;
+	std::map<CWPointObject*,bool> m_ObjIsColliding;
+
+	// box
+	bool m_bShowBox;
+
+	// xian added record events
+	std::ofstream outf;
+	std::vector <CCrashRec> Crashrecord;
+	double elapsed_time; //in ms since start
+	void updateTime(double t);
+	std::vector <CDistractor *> distractor;
+	int distractorN;
+	void AddToDistractor( const double t, const int tp, const char *c , const int dur);
+	// add a time so that one colliion does not continuously happen, current solution is to remove the object, 
+	// but the second lapse, the drive wont see them anymore
+	double collisionTime;
+
+	NirsTrigger nirs; // for triggering
+	Brain eeg;
 };
 
 #endif //__CW_VEHICLE_H_

@@ -60,8 +60,15 @@ public:
 	void draw();
 	Contact GetContact(const FixedVector &AVector);
 	Contact GetContact(const Point3D &APoint);
+
+	Contact GetFixedVectorContact(const FixedVector &AVector); // return valid contact if [AVector](segment) intersect with the landscape
+	Contact GetPointContact(const Point3D &APoint,double distance); // return valid contact if [APoint] and intersecting point in distance of [distance]
+
 //private:
 	list<WorldBlock> MyWorldBlocks;
+	list<WorldBlock>::const_iterator LastContactBlock;
+	WorldBlock::MyTriangle* LastContactTriangle;
+	double LastU, LastV;
 };
 
 #endif //__CAR_WORLD_CLASSES_H_

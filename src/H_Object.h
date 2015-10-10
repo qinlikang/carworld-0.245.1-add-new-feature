@@ -10,6 +10,7 @@ using namespace std;
 #include <list>
 
 #include "H_Graphics.h"
+#include "Box3D.h"
 
 class OFFObject
 {
@@ -65,7 +66,7 @@ public:
 	void debug_dump();
 //set the normals to the vertices
 	void InitMyData();
-	void draw(const Ref &Position = Ref());
+	void draw(const Ref &Position = Ref(),bool show_box=false);
 //optionnal manipulating functions
 	bool IsInit();
 	REAL GetMaxDist();
@@ -77,6 +78,9 @@ public:
 	void SetShading(bool AIsSmooth);
 	bool GetShading();
 	static bool UseOptimizedDraw;
+
+	// used for collision
+	Box3D MyBox;
 private:
 	void Allocate(unsigned int NbVertex, unsigned int NbPolygons);
 	void Release();
@@ -99,6 +103,7 @@ private:
 //TriIndexes is an array of indexes which represent the polygons
 //as triangles
 	vector<unsigned int> TriIndexes;
+
 
 	friend class Buffer;
 	friend istream &operator >> (istream &in, OFFObject::Vertex &AVertex);

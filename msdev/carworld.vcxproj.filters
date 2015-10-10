@@ -11,6 +11,9 @@
     <Filter Include="CarWorld specific">
       <UniqueIdentifier>{1b996eb3-3778-48e6-9f8d-7e098561f58b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="sqlite">
+      <UniqueIdentifier>{0dc3f9b0-18b2-4c2c-b6de-369afe542ceb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\DXJoystick.cpp">
@@ -87,6 +90,37 @@
     </ClCompile>
     <ClCompile Include="..\src\WorldBlock.cpp">
       <Filter>CarWorld specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CWBeeper.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CWMixerManager.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\OFFObjectPool.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Box3D.cpp">
+      <Filter>Generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sqlite\CppSQLite3.cpp">
+      <Filter>sqlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MyDatabase.cpp">
+      <Filter>sqlite</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\NirsTrigger.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Brain.cpp" />
+    <ClCompile Include="..\src\CollideObject.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Utility.cpp">
+      <Filter>CarWorld specific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CommandOption.cpp">
+      <Filter>SDL</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -165,8 +199,42 @@
     <ClInclude Include="..\src\WorldBlock.h">
       <Filter>CarWorld specific</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\H_Singleton.h">
+      <Filter>Generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CWBeeper.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CWMixerManager.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\OFFObjectPool.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Box3D.h">
+      <Filter>Generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sqlite\CppSQLite3.h">
+      <Filter>sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\MyDatabase.h">
+      <Filter>sqlite</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\NirsTrigger.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CollideObject.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Utility.h">
+      <Filter>CarWorld specific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\CommandOption.h">
+      <Filter>SDL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\readme.txt" />
+    <None Include="ClassDiagram1.cd" />
   </ItemGroup>
 </Project>

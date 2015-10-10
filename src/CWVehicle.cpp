@@ -5,8 +5,15 @@
 #include "H_Graphics.h"
 #include "H_Variable.h"
 #include "H_XML.h"
+#include <boost/bind.hpp>
+#include "CWBeeper.h"
+#include "CarWorldClient.h"
+#include "boost/foreach.hpp"
+#include "OFFObjectPool.h"
 
-//CLASS CWCommand
+extern ofstream herr;
+extern CarWorldClient* pCWC;
+
 CWCommand::CWCommand() : GasBrake(0), Steer(0), SteerFeedBack(0), HandBrake(false)
 {}
 
@@ -24,8 +31,8 @@ Wheel::Wheel(
 	REAL BrakeFactor,
 	REAL SteerFactor,
 	bool LockUp
-) :
-	RelPos(RelPos),
+	) :
+RelPos(RelPos),
 	SpringStiffness(SpringStiffness),
 	MaxTravel(MaxTravel),
 	MaxLoad(MaxLoad),
@@ -64,7 +71,7 @@ void Wheel::Set(const Ref &ARef, CWCommand &ACommand, CarWorld &CW)
 {
 	MyRef = ARef;
 
-//dissociate Gas from Break
+	//dissociate Gas from Break
 	REAL Gas = LIMIT(0.f,ACommand.GasBrake,1.f);
 	REAL Brake = LIMIT(0.f,-ACommand.GasBrake,1.f);
 	Lock = ACommand.HandBrake;
@@ -116,10 +123,10 @@ Point3D Wheel::CalcForce()
 		//only apply force if the susp is under load:
 		if (DeltaTravel>0)
 			Load = (SpringStiffness*Travel
-				+DamperCompression*DeltaTravel);
+			+DamperCompression*DeltaTravel);
 		else //DeltaTravel<0
 			Load = (SpringStiffness*Travel
-				+DamperRebound*DeltaTravel);
+			+DamperRebound*DeltaTravel);
 
 		if (Load>0)
 		{
@@ -177,11 +184,23 @@ void Wheel::draw()
 
 //CLASS CWVehicle:
 CWVehicle::CWVehicle(const char *name)
+	: m_bShowBox(false)
 {
 	MyDriveTrain = DriveTrain(RedLine, MaxTorque);
 	MyRef = InertRef(Mass, MassDistrib);
 
 	load(name);
+	elapsed_time=0;
+	distractorN=0;
+	distractor.clear();
+	collisionTime=-10000.0; // so that the first collision alway happen
+
+	bFakeCar=false;
+	vector<string> _tags=OFFObjectPool::sharedOFFPool()->getTags();
+	BOOST_FOREACH(const string&tag,_tags)
+	{
+		m_HitCount[tag]=0;
+	}
 }
 
 void CWVehicle::load(const char *name)
@@ -220,6 +239,13 @@ void CWVehicle::load(const char *name)
 	DescribeWheel["SteerFactor"] =			new HVar<REAL>("SteerFactor",&(W.SteerFactor));
 	DescribeWheel["LockUp"] =				new HVar<bool>("LockUp",&(W.LockUp));
 
+	CWBeeper BP;
+	map<string,HVariable*> DescribeBeeper;
+	DescribeBeeper["BeeperName"] =			new HVar<string>("BeeperName",&(BP.BeeperName));
+	DescribeBeeper["SoundFile"] =			new HVar<string>("SoundFile",&(BP.Filename));
+	DescribeBeeper["DefaultKeyBind"] =			new HVar<string>("DefaultKeyBind",&(BP.Keybinding));
+
+
 	XmlTag tag;
 	do
 	{
@@ -240,6 +266,12 @@ void CWVehicle::load(const char *name)
 					W = Wheel();
 					tag.write_to(DescribeWheel);
 					Wheels.push_back(W);
+				}
+				if (tag.name()== "CWBeeper")
+				{
+					BP = CWBeeper();
+					tag.write_to(DescribeBeeper);
+					Beepers.push_back(BP);
 				}
 			}
 		default:;
@@ -276,15 +308,15 @@ void CWVehicle::reset()
 
 void CWVehicle::update()
 {
-	if (MyRef.Position.z()<-100)
+	if (is_vehicle_out_of_road())
 	{
-		reset();
+		reset_to_fall_block();
 		return;
 	}
 
 	static Point3D Gravity(0,0,-EARTH_GRAVITY);
 
-//Add the suspention forces:
+	//Add the suspention forces:
 	MyCommand.SteerFeedBack = 0;
 	for (vector<Wheel>::iterator I = Wheels.begin() ; I != Wheels.end() ; I++)
 	{
@@ -297,15 +329,18 @@ void CWVehicle::update()
 		}
 	}
 
-//gravity
+	//gravity
 	MyRef.Apply(FixedVector(MyRef.Position, Gravity*MyRef.GetMass()));
-//friction
+	//friction
 	MyRef.Apply(FixedVector(MyRef.Position, MyRef.Speed*(-Friction*MyRef.Speed.norm())));
 
 	MyRef.TimeClick();
 
 	//make the rest of the car follow:
 	UpdateCWVehicleParams();
+
+	//     Model.MyBox.VisitAllPoint(boost::bind(&CWVehicle::LocalPosToGlobalPos,this,_1));
+	CollisionTest();
 }
 
 REAL CWVehicle::GetSpeed() const //returns speed in kph
@@ -317,9 +352,9 @@ void CWVehicle::UpdateCWVehicleParams()
 {
 	for (vector<Wheel>::iterator I = Wheels.begin() ; I != Wheels.end() ; I++)
 		(*I).Set(
-			MyRef.GetRef((*I).RelPos),
-			MyCommand,
-			*m_CarWorld
+		MyRef.GetRef((*I).RelPos),
+		MyCommand,
+		*m_CarWorld
 		);
 }
 
@@ -334,11 +369,16 @@ void CWVehicle::draw_init()
 	{
 		(*I).draw_init();
 	}
+
+	for(vector<CWBeeper>::iterator I = Beepers.begin(); I!= Beepers.end(); ++I)
+	{
+		I->init();
+	}
 }
 
 void CWVehicle::draw()
 {
-	if (Hgl::GetShadows()>0)
+	if (Hgl::GetShadows()>0&&!bFakeCar)
 		ProjectShadow(m_CarWorld->LightDirection);
 	drawShape();
 }
@@ -349,10 +389,23 @@ void CWVehicle::drawShape()
 	for (vector<Wheel>::iterator I = Wheels.begin() ; I != Wheels.end() ; I++)
 		(*I).draw();
 
+	if(bFakeCar)
+	{
+		Ref ref = MyRef.GetRef(Point3D(0,0,0));
+		glPushMatrix();
+		Hgl::Relocate(ref);
+		glDisable(GL_LIGHTING);
+		glColor3f(.0f,.0f,.0f);
+		Model.MyBox.DrawFrame();
+		glEnable(GL_LIGHTING);
+		glPopMatrix();
+		return;
+	}
+
 	//don't draw the body if we are using this car's interior-camera
 	InCarCam* InCam = dynamic_cast<InCarCam*>(m_CarWorld->m_Camera);
 	if ((InCam==NULL) || (InCam->m_Vehicle!=this))
-		Model.draw(MyRef.GetRef(Point3D(0,0,0)));
+		Model.draw(MyRef.GetRef(Point3D(0,0,0)),m_bShowBox);
 }
 
 void CWVehicle::ProjectShadow(const Point3D &LightDirection)
@@ -376,6 +429,7 @@ void CWVehicle::ProjectShadow(const Point3D &LightDirection)
 void CWVehicle::drawInfo()
 {
 	MyDriveTrain.drawInfo(MyRef.Speed.norm());
+
 }
 
 CWVehicleState CWVehicle::GetState()
@@ -390,4 +444,179 @@ void CWVehicle::SetState(CWVehicleState &state)
 {
 	*(Ref*)(&MyRef) = state.m_Ref;
 	MyCommand = state.m_Command;
+}
+
+bool CWVehicle::is_vehicle_out_of_road()
+{
+	for(vector<Wheel>::const_iterator it = Wheels.begin();it!=Wheels.end();++it)
+	{
+		Contact tmp = m_CarWorld->m_Landscape->GetPointContact(it->MyRef.Position,4.0);
+		if(tmp.Found)
+			return false;
+	}
+	AudioPlayer::shared_audio()->get_sound("Fall")->play_once();
+	nirs.on(elapsed_time);
+	CCrashRec temp;
+	temp.time=elapsed_time;
+	temp.type=0;
+	Crashrecord.push_back(temp);
+	return true;
+}
+
+void CWVehicle::reset_to_fall_block()
+{
+	CWLandscape& landscape = *(m_CarWorld->m_Landscape);
+	if(landscape.LastContactBlock!=landscape.MyWorldBlocks.end())
+	{
+
+		WorldBlock::MyTriangle* LastHitTri = landscape.LastContactTriangle;
+
+		Point3D reset_pt;
+
+		if(LastHitTri!=NULL)
+		{
+			reset_pt = LastHitTri->GetPointByUV(0,landscape.LastV);
+		}
+		else
+		{
+			reset_pt = LastHitTri->GetPointByUV(0,0);
+		}
+
+		// notice that edge v0v2 consist the road curb
+
+		Point3D forward_direction = LastHitTri->GetForwardDirection();
+		forward_direction.normalize();
+		reset();
+		MyRef.Position = reset_pt;
+		MyRef.Y = forward_direction;
+		MyRef.Position.z()+= 2.0;
+	}
+	else
+		reset();
+}
+
+Point3D CWVehicle::GetCenterPos() const
+{
+	return MyRef.GetAbsCoord(Model.MyBox.GetCenter());
+}
+
+void CWVehicle::GetBox3D( Box3D& box ) const
+{
+	box = Model.MyBox;
+	box.VisitAllPoint(boost::bind(&CWVehicle::LocalPosToGlobalPos,this,_1));
+}
+
+bool CWVehicle::IsPointInside( const Point3D& pt ) const
+{
+	Box3D box;
+	GetBox3D(box);
+	return box.IsPtInside(pt);
+}
+
+void CWVehicle::LocalPosToGlobalPos( Point3D& pt )const
+{
+	pt = MyRef.GetAbsCoord(pt);
+}
+
+void CWVehicle::CollisionTest()
+{
+	// by LX:
+	// i'm now using m_ObjIsColliding to keep collision happen only once.
+	// this statement takes me 2 hour to debug this problem. 
+	// if we do collision to slow, then ,if two object close enough, the second collision would not be detected.
+	// so, if you can keep objects away from each other so that the car would not pass two of them in a second, then this code is ok.
+// 	if ( elapsed_time-collisionTime<1) // atleast 1 second 
+// 		return;
+	if(bFakeCar)// we do not do colliding test when it's a fake car.
+		return;
+
+	Box3D box;
+	GetBox3D(box);
+	CCrashRec temp;
+	static void* pRem=NULL;
+	for(vector<CWPointObject*>::iterator it = m_ObjectsToCollade.begin(); it != m_ObjectsToCollade.end(); )
+	{
+		if((*it)->IsCollideWithBox(box))
+		{
+			if(!m_ObjIsColliding[(*it)])// it is not in colliding state
+			{
+				// execute colliding script!
+				if(pCWC)
+				{
+					pCWC->exec_file((*it)->ScriptFile.c_str());
+				}
+				// record the hit count;
+				++m_HitCount[(*it)->GetTag()];
+				m_ObjIsColliding[(*it)]=true;
+			}
+
+			if((*it)->GetTag()=="mushroom")
+			{
+				nirs.on(elapsed_time); 
+				collisionTime=elapsed_time;
+				temp.time=elapsed_time;
+				temp.type=2;
+				Crashrecord.push_back(temp);
+
+			}
+			else if((*it)->GetTag()=="cone")
+			{
+				nirs.on(elapsed_time); 
+				collisionTime=elapsed_time;
+				temp.time=elapsed_time;
+				temp.type=1;
+				Crashrecord.push_back(temp);
+			}
+		}
+		else
+		{
+			m_ObjIsColliding[(*it)]=false;
+		}
+		++it;
+	}
+}
+
+void CWVehicle::AddToColladeList( CWPointObject* object )
+{
+	m_ObjectsToCollade.push_back(object);
+	m_ObjIsColliding[object]=false;
+}
+
+void CWVehicle::updateTime(double t){ 
+	elapsed_time=t;
+	nirs.update(t);
+	eeg.update(t);
+	if (  distractorN >= distractor.size() || distractor[distractorN]->time>elapsed_time ) return;
+	switch (distractor[distractorN]->type){
+	case 0:
+		//herr<<" "<<distractor[distractorN]->time<<" "<<distractor[distractorN]->str<<endl;
+		AudioPlayer::shared_audio()->get_sound(distractor[distractorN++]->str)->play_once();
+		//AudioPlayer::shared_audio()->get_sound("HitCone")->play_once();
+
+		//distractorN++;
+		break;
+	case 1:
+		return;
+	}
+}
+
+void CWVehicle::AddToDistractor( const double t, const int tp, const char *c , const int dur)
+{
+	CDistractor *d=new CDistractor;
+	d->duration=dur;
+	d->str=string(c);
+	d->time=t;
+	d->type=tp;
+	distractor.push_back(d);
+}
+
+void CWVehicle::RemoveFromeCollideList( CWPointObject* object )
+{
+	vector<CWPointObject*>::iterator it;
+	it=std::find(m_ObjectsToCollade.begin(),m_ObjectsToCollade.end(),object);
+	if(it!=m_ObjectsToCollade.end())
+	{
+		m_ObjectsToCollade.erase(it);
+		m_ObjIsColliding.erase(m_ObjIsColliding.find(object));
+	}
 }

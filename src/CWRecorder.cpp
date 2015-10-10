@@ -1,35 +1,35 @@
 #include "CWRecorder.h"
 #include <boost/format.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <ctime>
 #include <cassert>
 #include <fstream>
-
-const string CWRecorder::RecordPath="./Records/";
+#include "H_Main.h"
+#include "MyDatabase.h"
+#include "CommandOption.h"
 
 CWRecorder::CWRecorder(RecorderState state)
 	:m_RecorderState(state)
 {
 	reset();
-	if(m_RecorderState==ERS_Replaying)
+	if(m_RecorderState==ERS_Replay)
 		restore(); // restore the records from replay file
 }
 
 
 CWRecorder::~CWRecorder(void)
 {
-	if(m_RecorderState==ERS_Recording)
+	if(m_RecorderState==ERS_Record)
 		dump(); // dump the records
 }
 
 void CWRecorder::update()
 {
-	if(m_RecorderState==ERS_Replaying)
+	if(m_RecorderState==ERS_Replay)
 	{
 		replay();
 	}
-	else if(m_RecorderState==ERS_Recording)
+	else if(m_RecorderState==ERS_Record)
 	{
 		record();
 	}
@@ -42,11 +42,11 @@ void CWRecorder::update()
 void CWRecorder::reset()
 {
 	m_Cursor=m_Records.begin();
-	if(m_RecorderState==ERS_Recording)
+	if(m_RecorderState==ERS_Record)
 	{
 		m_Records.clear();
 	}
-	m_startTime=clock();
+	m_Timer.start();
 }
 
 void CWRecorder::draw_on_screen()
@@ -56,10 +56,10 @@ void CWRecorder::draw_on_screen()
 	string recorder_state("RECODER: ");
 	switch (m_RecorderState)
 	{
-	case ERS_Recording:
+	case ERS_Record:
 		recorder_state+="recording..";
 		break;
-	case ERS_Replaying:
+	case ERS_Replay:
 		recorder_state+="replaying..";
 		break;
 	case ERS_OFF:
@@ -87,10 +87,39 @@ void CWRecorder::draw_on_screen()
 	glPopMatrix();
 }
 
+std::string CWRecorder::dump()
+{
+	using namespace boost;
+	format day_fmt("%04d/%02d/%02d");
+	format time_fmt("%02d:%02d:%02d");
+	format table_name_fmt("%s_%04d%02d%02d_%02d%02d%02d");
+
+	// get current time
+	time_t raw_time;
+	tm* ptm;
+	time(&raw_time);
+	ptm = localtime(&raw_time);
+
+	day_fmt%(ptm->tm_year+1900)%(ptm->tm_mon+1)%(ptm->tm_mday);
+	time_fmt%(ptm->tm_hour)%(ptm->tm_min)%(ptm->tm_sec);
+	table_name_fmt%name()%(ptm->tm_year+1900)%(ptm->tm_mon+1)%(ptm->tm_mday)%(ptm->tm_hour)%(ptm->tm_min)%(ptm->tm_sec);
+
+	// add a record to RecordSummary table
+	CppSQLite3DB* db = MyDatabase::shared_output_database();
+	if(!db->tableExists("RecordSummary"))
+	{
+		throw HException("RecordSummary does not exist in output database");
+	}
+	format value_fmt("insert into RecordSummary values('%s','%s','%s')");
+	value_fmt%day_fmt.str()%time_fmt.str()%table_name_fmt.str();
+	db->execDML(value_fmt.str().c_str());
+
+	return table_name_fmt.str();
+}
+
 VehicleStateRecorder::VehicleStateRecorder( CWVehicle* pVehicle/*=NULL*/,RecorderState state/*=ERS_Recording*/ )
 	:m_Vehicle(pVehicle),CWRecorder(state)
 {
-	m_Cursor=m_Records.begin();
 }
 
 void VehicleStateRecorder::record()
@@ -101,10 +130,9 @@ void VehicleStateRecorder::record()
 		reset();
 	}
 
-	clock_t now_time=clock();
-	double elapse_time = double(now_time-m_startTime)/CLOCKS_PER_SEC;
-
-	m_Records.push_back(CWRecordItemPtr(new CWRecordItem_VehicleState(m_Vehicle,elapse_time)));
+	double elapse_time = double(m_Timer.get_elapse_clocks())/CLOCKS_PER_SEC;
+	m_Vehicle->updateTime(elapse_time);
+	m_Records.push_back(BaseItemPtrT(new CWRecordItem_VehicleState(m_Vehicle,elapse_time)));
 	m_Cursor=m_Records.end();
 }
 
@@ -117,64 +145,56 @@ void VehicleStateRecorder::replay()
 	++m_Cursor;
 }
 
+// xian modify so that save faster
 std::string VehicleStateRecorder::dump()
 {
-	boost::format fmt("%d-%d-%d_%d-%d-%d.txt");
+	using namespace boost;
+	string table = BaseT::dump();
 	
-	// get current time, use it to format output filename
-	time_t raw_time;
-	tm* ptm;
-	time(&raw_time);
-	ptm = localtime(&raw_time);
+	CppSQLite3DB* db = MyDatabase::shared_output_database();
 
-	fmt%(ptm->tm_year+1900)%(ptm->tm_mon+1)%(ptm->tm_mday)%(ptm->tm_hour)%(ptm->tm_min)%(ptm->tm_sec);
-	string filename=fmt.str();
+	format fmt = format("create table %s (i int, elapsed_time double,x double, y double, z double)")%table;
+	// creat a new record table
+	db->execDML(
+		fmt.str().c_str()
+	);
 
-	// use boost.filesystem to keep platform-independce
-	// need compile the boost.filesystem to get the static lib.
-	using namespace boost::filesystem;
-	path record_path(RecorderBase::RecordPath + name());
+	// using the table name as the fle name to generate a data file
+	 fmt = format(CommandOption::Option().OutDir+"\\%s")%table;
+	ofstream outf(fmt.str().c_str());
 
-	try
-	{
-		if(!exists(record_path))
-		{
-			// create the folder
-			create_directories(record_path);
-		}
-		else if(!is_directory(record_path))
-		{
-			// delete the file, and create the folder
-			remove_all(record_path);
-			create_directories(record_path);
-		}
-	}
-	catch(...)
-	{
-		cout<<"FAILED In "<<__FILE__<<"("<<__LINE__<<")"<<endl;
-		cout<<"Cannot make directory for records file: "<<record_path<<endl;
-		return "";
-	}
-
-	if(!portable_name(filename))
-	{
-		cout<<"FAILED In "<<__FILE__<<"("<<__LINE__<<")"<<endl;
-		cout<<"not portable file name: "<<filename.c_str()<<endl;
-		return "";
-	}
-
-	record_path.append(filename.begin(),filename.end());
-
-	std::ofstream record_os(record_path.c_str());
 
 	// record the stuff
-	BOOST_FOREACH(CWRecordItemPtr& p_record,m_Records)
+	unsigned int i=0;
+	BOOST_FOREACH(BaseItemPtrT& p_record,m_Records)
 	{
-		p_record->write_to_os(record_os);
+		ItemPtrT p = static_pointer_cast<ItemT>(p_record);
+		if(p)
+		{
+			Point3D& pos = p->m_State.m_Ref.Position;
+			//format fmt = format("insert into %s values(%d, %f, %f, %f, %f)")%table%i%(p->m_TimeElapse)%pos.x()%pos.y()%pos.z();
+			//db->execDML(fmt.str().c_str());  db saving too slow, direct save
+			format fmt = format("%d, %f, %f, %f, %f")%i%(p->m_TimeElapse)%pos.x()%pos.y()%pos.z();
+			outf<<fmt.str().c_str()<<endl;
+			++i;
+		}
 	}
-	record_os.close();
+	outf.close();
 
-	return record_path.string();
+	// xian add crash record
+	 fmt = format("create table %s_crash (elapsed_time time,type int)")%table;
+	// creat a new record table
+	db->execDML(
+		fmt.str().c_str()
+		);
+
+
+	for (i=0;i<m_Vehicle->Crashrecord.size();i++)
+	{
+		format fmt = format("insert into %s_crash values(%d, %d)")%table%m_Vehicle->Crashrecord[i].time%m_Vehicle->Crashrecord[i].type;
+		db->execDML(fmt.str().c_str()); 	
+	}
+	return table;
 }
 
 void VehicleStateRecorder::restore()
@@ -184,7 +204,7 @@ void VehicleStateRecorder::restore()
 
 void VehicleStateRecorder::draw_on_screen()
 {
-	RecorderBase::draw_on_screen();
+	BaseT::draw_on_screen();
 	glPushMatrix();
 
 	boost::format fmt("%d");
@@ -194,10 +214,86 @@ void VehicleStateRecorder::draw_on_screen()
 	glPopMatrix();
 }
 
-
-
-void CWRecordItem_VehicleState::write_to_os( std::ostream& os )
+CWRecordItem_KeyboardInput::CWRecordItem_KeyboardInput( HWindow* hwindow,double time_elapse ) : CWRecordItem(time_elapse)
 {
-	RecorderItemBase::write_to_os(os);
-	os<<m_State.m_Ref.Position<<endl;
+	upPressed = hwindow->IsPressed(SDLK_UP);
+	downPressed = hwindow->IsPressed(SDLK_DOWN);
+	leftPressed = hwindow->IsPressed(SDLK_LEFT);
+	rightPressed = hwindow->IsPressed(SDLK_RIGHT);
+	spacePressed = hwindow->IsPressed(SDLK_SPACE);
+}
+
+KeyboardInputRecorder::KeyboardInputRecorder( HWindow* hwindow,RecorderState state/*=ERS_Record*/ )
+	: BaseT(state)
+	, m_hWindow(hwindow)
+{}
+
+void KeyboardInputRecorder::draw_on_screen()
+{
+
+}
+
+void KeyboardInputRecorder::restore()
+{
+
+}
+
+std::string KeyboardInputRecorder::dump()
+{
+	using namespace boost;
+	string table = BaseT::dump();
+
+	CppSQLite3DB* db = MyDatabase::shared_output_database();
+
+	format fmt = format("create table %s (i int, elapsed_time double,up_pressed int, down_pressed int, left_pressed int, right_pressed int, space_pressed int)")%table;
+	// creat a new record table
+	db->execDML(
+		fmt.str().c_str()
+		);
+
+	 fmt = format(CommandOption::Option().OutDir+"\\%s")%table;
+	
+	ofstream outf(fmt.str().c_str());
+
+
+	// record the stuff
+	unsigned int i=0;
+	BOOST_FOREACH(BaseItemPtrT& p_record,m_Records)
+	{
+		ItemPtrT p = static_pointer_cast<ItemT>(p_record);
+		if(p)
+		{
+			//format fmt = format("insert into %s values(%d, %f, %d, %d, %d, %d, %d)")%table%i%(p->m_TimeElapse)
+				//%int(p->upPressed)%int(p->downPressed)%int(p->leftPressed)%int(p->rightPressed)%int(p->spacePressed);
+			//db->execDML(fmt.str().c_str()); works very slow
+			if (p->upPressed|p->downPressed|p->leftPressed|p->rightPressed|p->spacePressed){
+			format fmt = format("%d, %f, %d, %d, %d, %d, %d")%i%(p->m_TimeElapse)
+				%int(p->upPressed)%int(p->downPressed)%int(p->leftPressed)%int(p->rightPressed)%int(p->spacePressed);
+			outf<<fmt.str().c_str()<<endl;
+			}
+			++i;
+		}
+	}
+	outf.close();
+	return table;
+
+}
+
+void KeyboardInputRecorder::replay()
+{
+
+}
+
+void KeyboardInputRecorder::record()
+{
+	if(!m_hWindow) return;
+	if(m_Records.empty())
+	{
+		reset();
+	}
+
+	double elapse_time = double(m_Timer.get_elapse_clocks())/CLOCKS_PER_SEC;
+
+	m_Records.push_back(BaseItemPtrT(new ItemT(m_hWindow,elapse_time)));
+	m_Cursor=m_Records.end();
 }

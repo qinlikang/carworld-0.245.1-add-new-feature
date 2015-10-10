@@ -7,6 +7,7 @@
 #include "H_Graphics.h"
 #include "H_Object.h"
 #include "H_Standard.h"
+#include <boost/bind.hpp>
 
 bool OFFObject::UseOptimizedDraw = false;
 
@@ -195,9 +196,12 @@ void OFFObject::readfile(const char* FileName)
 		infile >> NVERTICES >> NFACES >> NEDGES;
 		Allocate(NVERTICES, NFACES);
 		//cout << read all the points from the file
+
 		for (unsigned int i=0 ; i<MyOFFVertexes.size() ; i++)
 		{
 			infile >> MyOFFVertexes[i].Position;
+			const Point3D& pos = MyOFFVertexes[i].Position;
+
 			if (IsTextured)
 				infile >> MyOFFVertexes[i].TexCoord;
 		}
@@ -306,6 +310,38 @@ void OFFObject::InitMyData()
 			TriIndexes[current++] = MyOFFPolygons[i].IndexVertexes[j+1];
 		}
 	}
+
+
+	// init box
+	REAL minX,minY,minZ,maxX,maxY,maxZ;
+	minX=maxX = MyOFFVertexes[0].Position.x();
+	minY=maxY = MyOFFVertexes[0].Position.y();
+	minZ=maxZ = MyOFFVertexes[0].Position.z();
+
+	for (unsigned int i=1 ; i<MyOFFVertexes.size() ; i++)
+	{
+		const Point3D& pos = MyOFFVertexes[i].Position;
+
+		// update bounding
+		if(pos.x()>maxX) maxX = pos.x();
+		if(pos.y()>maxY) maxY = pos.y();
+		if(pos.z()>maxZ) maxZ = pos.z();
+		if(pos.x()<minX) minX = pos.x();
+		if(pos.y()<minY) minY = pos.y();
+		if(pos.z()<minZ) minZ = pos.z();
+
+	}
+	// init bounding
+	MyBox.A1 = Point3D(minX,maxY,minZ);
+	MyBox.A2 = Point3D(minX,maxY,maxZ);
+	MyBox.B1 = Point3D(maxX,maxY,minZ);
+	MyBox.B2 = Point3D(maxX,maxY,maxZ);
+	MyBox.C1 = Point3D(maxX,minY,minZ);
+	MyBox.C2 = Point3D(maxX,minY,maxZ);
+	MyBox.D1 = Point3D(minX,minY,minZ);
+	MyBox.D2 = Point3D(minX,minY,maxZ);
+	MyBox.Init();
+
 }
 
 void OFFObject::Center()
@@ -327,14 +363,16 @@ void OFFObject::Scale(const Point3D &scale)
 {
 	for (unsigned int i=0 ; i<MyOFFVertexes.size() ; i++)
 	{
-		MyOFFVertexes[i].Position.x() = MyOFFVertexes[i].Position.x()*scale.x();
-		MyOFFVertexes[i].Position.y() = MyOFFVertexes[i].Position.y()*scale.y();
-		MyOFFVertexes[i].Position.z() = MyOFFVertexes[i].Position.z()*scale.z();
+		ScaleBy(MyOFFVertexes[i].Position,scale);
+// 		MyOFFVertexes[i].Position.x() = MyOFFVertexes[i].Position.x()*scale.x();
+// 		MyOFFVertexes[i].Position.y() = MyOFFVertexes[i].Position.y()*scale.y();
+// 		MyOFFVertexes[i].Position.z() = MyOFFVertexes[i].Position.z()*scale.z();
 	}
+	MyBox.VisitAllPoint(boost::bind(ScaleBy<REAL>,_1,scale));
 	InitMyData();
 }
 
-void OFFObject::draw(const Ref &Position)
+void OFFObject::draw(const Ref &Position /*= Ref()*/,bool show_box/*=false*/)
 {
 	//is the object initialized?
 	if (!IsInit()) return;
@@ -357,6 +395,9 @@ void OFFObject::draw(const Ref &Position)
 		GLdraw(!Hgl::IsEnabled(Hgl::SHADOW));
 	else
 		GLdraw_NoOpt(!Hgl::IsEnabled(Hgl::SHADOW));
+
+	if(show_box)
+		MyBox.DrawFrame();
 	glPopMatrix();
 }
 
@@ -501,12 +542,15 @@ void OFFObject::Rotate(const Point3D &K)
 {
 	for (unsigned int i=0 ; i<MyOFFVertexes.size() ; i++)
 		RotateAround(MyOFFVertexes[i].Position,K);
+	MyBox.VisitAllPoint(boost::bind(RotateAround<REAL>,_1,K));
 	InitMyData();
 }
 void OFFObject::Translate(const Point3D &K)
 {
 	for (unsigned int i=0 ; i<MyOFFVertexes.size() ; i++)
-		MyOFFVertexes[i].Position += K;
+		TranslateBy(MyOFFVertexes[i].Position,K);
+// 		MyOFFVertexes[i].Position += K;
+	MyBox.VisitAllPoint(boost::bind(TranslateBy<REAL>,_1,K));
 	InitMyData();
 }
 

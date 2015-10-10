@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "carworld", "carworld.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TransformWorldBlock", "TransformWorldBlock.vcxproj", "{7AB7F74E-50F0-4E30-9271-99491D3FFF0B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ShowOFF", "ShowOFF\ShowOFF.vcxproj", "{4C6D7224-47CE-4DA6-97B2-D4EE40626BD4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{7AB7F74E-50F0-4E30-9271-99491D3FFF0B}.Debug|Win32.Build.0 = Debug|Win32
 		{7AB7F74E-50F0-4E30-9271-99491D3FFF0B}.Release|Win32.ActiveCfg = Release|Win32
 		{7AB7F74E-50F0-4E30-9271-99491D3FFF0B}.Release|Win32.Build.0 = Release|Win32
+		{4C6D7224-47CE-4DA6-97B2-D4EE40626BD4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4C6D7224-47CE-4DA6-97B2-D4EE40626BD4}.Debug|Win32.Build.0 = Debug|Win32
+		{4C6D7224-47CE-4DA6-97B2-D4EE40626BD4}.Release|Win32.ActiveCfg = Release|Win32
+		{4C6D7224-47CE-4DA6-97B2-D4EE40626BD4}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

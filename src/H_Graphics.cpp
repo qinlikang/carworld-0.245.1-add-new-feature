@@ -168,13 +168,13 @@ Hgl::Hgl(HWindow *w) :
 	cout << endl;
 
 	//set hgl defaults
-	Hgl::Disable(Hgl::SHADOW);
+ 	Hgl::Disable(Hgl::SHADOW);
 	Hgl::SetShadows(HGL_SHADOWS_DEFAULT);
-	Hgl::SetTextureMode(HGL_TEXTURE_MODE_DEFAULT);
-	Hgl::SetFinish(HGL_FINISH_DEFAULT);
-	Hgl::SetVertexArrays(HGL_VERTEX_ARRAYS_DEFAULT);
-	Hgl::SetExtCompiledVertexArrays((glLockArrays!=NULL) && HGL_EXT_COMPILED_VERTEX_ARRAYS_DEFAULT);
-
+ 	Hgl::SetTextureMode(HGL_TEXTURE_MODE_DEFAULT);
+ 	Hgl::SetFinish(HGL_FINISH_DEFAULT);
+ 	Hgl::SetVertexArrays(HGL_VERTEX_ARRAYS_DEFAULT);
+ 	Hgl::SetExtCompiledVertexArrays((glLockArrays!=NULL) && HGL_EXT_COMPILED_VERTEX_ARRAYS_DEFAULT);
+ 
 	//set gl defaults
 	glLoadIdentity();
 	glEnable(GL_COLOR_MATERIAL);

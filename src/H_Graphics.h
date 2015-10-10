@@ -156,4 +156,26 @@ Hgl::Enum ToHglEnum(const char* str);
 istream &operator>> (istream &in, Hgl::Enum &A);
 ostream &operator<< (ostream &out, const Hgl::Enum &A);
 
+
+template<class T>
+void findPlane(REAL plane[4], Point<3,T> &v0, Point<3,T> &v1, Point<3,T> &v2)
+{
+	/* Need 2 vectors to find cross product. */
+	Point<3,T> vec0 = v1 - v0;
+	Point<3,T> vec1 = v2 - v0;
+	Point<3,T> VecProd = vec0^vec1;
+
+	/* find cross product to get A, B, and C of plane equation */
+	plane[0] = REAL(VecProd.x());
+	plane[1] = REAL(VecProd.y());
+	plane[2] = REAL(VecProd.z());
+
+	plane[3] = REAL(-(plane[0] * v0.x() + plane[1] * v0.y() + plane[2] * v0.z()));
+}
+
+template<class T>
+REAL SubstituteIntoPlane(const REAL plane[4],const Point<3,T>& v0)
+{
+	return (plane[0] * v0.x() + plane[1] * v0.y() + plane[2] * v0.z())+plane[3];
+}
 #endif //__H_GRAPHICS_H_

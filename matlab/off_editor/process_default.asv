@@ -1,0 +1,7 @@
+function retobj = process_default(obj)
+retobj = obj;
+retobj.Vertex(3,:) = obj.Vertex(2,:);
+retobj.Vertex(2,:) = obj.Vertex(3,:);
+retobj = scale_off(retobj,0.01);
+minXYZ=min(ret
+retobj = flip_off()

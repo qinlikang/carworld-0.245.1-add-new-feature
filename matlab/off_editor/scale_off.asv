@@ -1,0 +1,3 @@
+function scaled = scale_off(obj,fscale)
+scaled = obj;
+scaled.Vertices = eye(3)*fscale*obj.Verti;

@@ -206,6 +206,66 @@ OFFObject::Polygon WorldBlock::MyTriangle::toOFFPolygon() const
 		tmp.MyColor = Color(255,255,255);
 	return tmp;
 }
+
+bool WorldBlock::MyTriangle::GetInsidePointUVParameter( const Point2D& inside_pt,double& u, double& v ) 
+{
+	if(!IsInside(inside_pt)) return false;
+
+	// these three vertex should be the vertex of the triangle.
+	Point3D* v0 = &MyWorldBlock->MyOFFVertexes[MyI].Position; // should be the index of the triangle. also the point of the edge, which consist of road curb.
+	Point3D* v1 = &MyWorldBlock->MyOFFVertexes[MyI+1].Position; // 
+	Point3D* v2 = &MyWorldBlock->MyOFFVertexes[MyI+2].Position;// also the point of the edge, which consist of road curb.
+		// all above should be assured by wordblock provider, to ensure correctness of the algorithm.
+
+	Point2D CurbEdgeV1(v0->x(),v0->y());
+	Point2D CurbEdgeV2(v2->x(),v2->y());
+	Point2D CurbVertex(v1->x(),v1->y());
+
+	double A = inside_pt.y()-CurbVertex.y();
+	double B = inside_pt.x()-CurbVertex.x();
+	double C = CurbEdgeV2.y()-CurbEdgeV1.y();
+	double D = CurbEdgeV2.x()-CurbEdgeV1.x();
+
+	double insect_x = ( (A*D*CurbVertex.x() - B*C*CurbEdgeV1.x()) + B*D*(CurbEdgeV1.y()- CurbVertex.y()) ) / (A*D-B*C);
+	double insect_y = A*(insect_x-CurbVertex.x())/B+CurbVertex.y();
+	Point2D P((REAL)insect_x,(REAL)insect_y);
+
+	Point2D a = inside_pt-CurbVertex;
+	Point2D b = P - CurbVertex;
+	double for_cal_u = (a.norm()/b.norm()-0.5)/0.5;
+	if(IsLeftBorderTriangle()) u = -for_cal_u;
+	else u = for_cal_u;
+
+	Point2D c = CurbEdgeV2 - CurbEdgeV1;
+	Point2D d = P -CurbEdgeV1;
+	v = d.norm()/c.norm();
+	return true;
+}
+
+Point3D WorldBlock::MyTriangle::GetPointByUV( const double& u,const double& v )
+{
+	Point3D* v0 = &MyWorldBlock->MyOFFVertexes[MyI].Position; // should be the index of the triangle. also the point of the edge, which consist of road curb.
+	Point3D* v1 = &MyWorldBlock->MyOFFVertexes[MyI+1].Position; // 
+	Point3D* v2 = &MyWorldBlock->MyOFFVertexes[MyI+2].Position;// also the point of the edge, which consist of road curb.
+
+	Point3D P = (*v0) + (*v2-*v0)*REAL(v);
+	double radio;
+	if(IsLeftBorderTriangle()) radio = -u*0.5+0.5;
+	else radio = u*0.5+0.5;
+
+	Point3D ret = (*v1) + (P-(*v1))*REAL(radio);
+	return ret;
+}
+
+Point3D WorldBlock::MyTriangle::GetForwardDirection()
+{
+	const Point3D& v0 = (MyWorldBlock->MyOFFVertexes[MyI]).Position;
+	const Point3D& v2 = (MyWorldBlock->MyOFFVertexes[MyI+2]).Position;
+	Point3D ret = v2-v0;
+	ret.normalize();
+	return ret;
+}
+
 istream &operator >> (istream &infile, WorldBlock::MyTriangle &ATriangle)
 {
 	ATriangle.Read(infile);

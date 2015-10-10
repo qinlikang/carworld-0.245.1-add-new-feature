@@ -49,6 +49,7 @@ CWLandscape::CWLandscape(const char *file_name)
 {
 	try
 	{
+		LastContactBlock = MyWorldBlocks.begin();
 		char BlockName[1024];
 
 		Ref CurrentRef;
@@ -115,6 +116,52 @@ Contact CWLandscape::GetContact(const Point3D &APoint)
 		tmp = (*I).GetContact(APoint);
 		if (tmp.Found)
 			return tmp;
+	}
+	return tmp;
+}
+
+Contact CWLandscape::GetFixedVectorContact( const FixedVector &AVector )
+{
+	Contact tmp;
+	for (list<WorldBlock>::iterator I = MyWorldBlocks.begin() ; I!=MyWorldBlocks.end() ; I++)
+	{
+		tmp = (*I).GetContact(AVector);
+		if (tmp.Found)
+		{
+			if(tmp.Position.distance(AVector.Position)<AVector.Value.norm()+EPSILON)
+			{
+				LastContactBlock = I;
+				LastContactTriangle = I->PreviousTriangle;
+				Point2D pt(tmp.Position.x()	,tmp.Position.y());
+				LastContactTriangle->GetInsidePointUVParameter(pt,LastU,LastV);
+				return tmp;
+			}
+			else
+				tmp.Found=false;
+		}
+	}
+	return tmp;
+}
+
+Contact CWLandscape::GetPointContact( const Point3D &APoint,double distance )
+{
+	Contact tmp;
+	for (list<WorldBlock>::iterator I = MyWorldBlocks.begin() ; I!=MyWorldBlocks.end() ; I++)
+	{
+		tmp = (*I).GetContact(APoint);
+		if (tmp.Found)
+		{
+			if(tmp.Position.distance(APoint)<distance+EPSILON)
+			{
+				LastContactBlock = I;
+				LastContactTriangle = I->PreviousTriangle;
+				Point2D pt(tmp.Position.x()	,tmp.Position.y());
+				LastContactTriangle->GetInsidePointUVParameter(pt,LastU,LastV);
+				return tmp;
+			}
+			else
+				tmp.Found=false;
+		}
 	}
 	return tmp;
 }

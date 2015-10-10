@@ -1,0 +1,1 @@
+cmd /K "carworld.exe -h"

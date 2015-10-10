@@ -1,0 +1,6 @@
+function ret = flip_off(obj,axis_number)
+v = obj.Vertex(axis_number,:);
+maxv = max(v);
+v=maxv-v;
+ret = obj
+ret.Vertex(axis_number,:)=v;

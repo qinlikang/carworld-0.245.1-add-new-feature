@@ -1,16 +1,15 @@
-
-
 #include "H_Standard.h"
 #include "CarWorld.h"
 #include "H_Graphics.h"
 #include <stdio.h>
 #include <sstream>
+#include "H_Main.h"
 
+#define FOR_ALL_RECORDERS for(std::map<const char*, CWRecorder*>::iterator it = m_Recorders.begin(); it!=m_Recorders.end();++it)
 //CLASS CarWorld:
-CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
+CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile, bool not_save) :
 						m_Landscape(new CWLandscape(LandscapeFile)),
 						m_Camera(new FixCam()),
-						m_Recorder(NULL),
 						m_Background(new CWBackground()),
 						RealTime(0),
 						Frames(0),
@@ -19,7 +18,8 @@ CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
 						MyTimeRefreshRate(TimeRefreshRate),
 						draw_console(false),
 						draw_background(true),
-						LightDirection(-.6f,-.4f,1.f)
+						LightDirection(-.6f,-.4f,1.f),
+						m_Vehicle(NULL)
 {
 	m_fogon=false;
 	add(m_Landscape);
@@ -27,6 +27,7 @@ CarWorld::CarWorld(int TimeRefreshRate, const char *LandscapeFile) :
 	add(m_Background);
 
 	Ref::TimeIncrement = INIT_TIME_INCREMENT;
+	m_not_save=not_save;
 }
 void CarWorld::draw_init()
 {
@@ -36,6 +37,7 @@ void CarWorld::draw_init()
 }
 CarWorld::~CarWorld()
 {
+	off_recorder();
 	for (list<CWFeature*>::iterator I=m_Features.begin() ; I!=m_Features.end() ; I++)
 		delete (*I);
 }
@@ -49,11 +51,16 @@ void CarWorld::add(CWFeature* AFeature)
 void CarWorld::add(CWVehicle* AVehicle)
 {
 	add((CWFeature*)AVehicle);
-	add(m_Camera = new InCarCam(AVehicle));
-	add(m_Recorder = new VehicleStateRecorder(AVehicle));
+	add(m_Camera = new FollowCam(AVehicle));
+	add(m_Recorders["vehicle"] = new VehicleStateRecorder(AVehicle));
+
+	add(new InCarCam(AVehicle));
+	add(new FreeCam(AVehicle));
 	add(new FixCam(AVehicle));
-	add(new FollowCam(AVehicle));
 	add(new SateliteCam(AVehicle));
+
+
+	m_Vehicle = AVehicle;
 }
 
 //precondition: m_Camera is a pointer to a CWFeature in m_Features
@@ -102,10 +109,10 @@ void CarWorld::update(int ElapsedTimeMs)
 		Frames = 0;
 		RealTime = 0;
 	}
-
+	
 	for (int i=0 ; i<NbTimeClicksPerFrame ; i++)
 	{
-		if(m_Recorder!=NULL&&m_Recorder->is_replay_and_finished()) return;
+		if(m_Recorders["vehicle"]!=NULL&&m_Recorders["vehicle"]->is_replay_and_finished()) return;
 		for (list<CWFeature*>::iterator I=m_Features.begin() ; I!=m_Features.end() ; I++)
 			(*I)->update();	
 	}
@@ -172,14 +179,51 @@ void CarWorld::DrawOnScreen()
 
 	ostringstream FPSCaption;
 	FPSCaption << fps;
+	/*
 	Hgl::SetColor(White);
-	Hgl::WriteText(FPSCaption.str().c_str(), Point2D(-.25,.75)); //write fps and speed*/
+	Hgl::WriteText(FPSCaption.str().c_str(), Point2D(-.25,.75)); //write fps and speed
+	
 
 	//draw car info
 	m_Camera->DrawOnScreen();
 	//draw recorder info
-	if(m_Recorder!=NULL)
-		m_Recorder->draw_on_screen();
+	if(m_Recorders["vehicle"]!=NULL)
+		m_Recorders["vehicle"]->draw_on_screen();
+
+	// test for u,v
+	WorldBlock::MyTriangle* pTri;
+	if(m_Landscape->LastContactBlock!=m_Landscape->MyWorldBlocks.end() 
+		&& (pTri=m_Landscape->LastContactBlock->PreviousTriangle)!=NULL)
+	{
+
+		double u,v;
+		Point3D carPos;
+		InCarCam* in_car_cam = dynamic_cast<InCarCam*>(m_Camera);
+		if(in_car_cam!=NULL)
+		{
+			carPos = in_car_cam->m_Vehicle->MyRef.Position;
+			Point2D carPlanePos(carPos.x(),carPos.y());
+			if(pTri->GetInsidePointUVParameter(carPlanePos,u,v))
+			{
+				{
+					char UVindicator[30]={0};
+					sprintf(UVindicator,"u:%5.2f, v:%5.2f",u,v);
+					Hgl::WriteText(UVindicator, Point2D(.0f,.0f)); //write global position
+				}
+				{
+					Point3D pt = pTri->GetPointByUV(u,v);
+					char RoadPoint[50]={0};
+					sprintf(RoadPoint,"%5.2f,%5.2f,%5.2f !! %5.2f,%5.2f,%5.2f",pt.x()	,pt.y()	,pt.z(), carPos.x()	,carPos.y()	,carPos.z()	);
+					Hgl::WriteText(RoadPoint, Point2D(-.2f,-.2f)); //write global position
+				}
+			}
+		}
+	}
+	*/
+
+	char BonusHint[30]={0};
+	sprintf(BonusHint,"Score: %d | Fail:%d",m_Vehicle->m_HitCount["mushroom"],m_Vehicle->m_HitCount["cone"]);
+	Hgl::WriteText(BonusHint, Point2D(.0f,-.90f)); //write global position
 
 	glPopMatrix();
 	glMatrixMode(GL_PROJECTION);
@@ -190,19 +234,105 @@ void CarWorld::DrawOnScreen()
 	glEnable(GL_LIGHTING);
 }
 
-void CarWorld::recording()
+void CarWorld::record()
 {
-	m_Recorder->set_state(CWRecorder::ERS_Recording);
+	FOR_ALL_RECORDERS
+	{
+		CWRecorder* R = it->second;
+		R->set_state(CWRecorder::ERS_Record);
+	}
 }
 
-void CarWorld::replaying()
+void CarWorld::replay()
 {
-	m_Recorder->set_state(CWRecorder::ERS_Replaying);
+	FOR_ALL_RECORDERS
+	{
+		CWRecorder* R = it->second;
+		R->set_state(CWRecorder::ERS_Replay);
+	}
 }
 
 void CarWorld::off_recorder()
 {
-	m_Recorder->m_strOtherMsg= "FileSaved In: "+m_Recorder->dump();
-	m_Recorder->set_state(CWRecorder::ERS_OFF);
+	if ( m_not_save) return;
+	m_Recorders["vehicle"]->m_strOtherMsg= "FileSaved!! ";
+	FOR_ALL_RECORDERS
+	{
+		CWRecorder* R = it->second;
+		R->dump();
+		R->set_state(CWRecorder::ERS_OFF);
+	}
 }
 
+void CarWorld::pause_recorder_timer( bool pause/*=true*/ )
+{
+	if(pause)
+	{
+		FOR_ALL_RECORDERS
+		{
+			CWRecorder* R = it->second;
+			R->m_Timer.pause();
+		}
+	}
+	else
+	{
+		FOR_ALL_RECORDERS
+		{
+			CWRecorder* R = it->second;
+			R->m_Timer.resume();
+		}
+	}}
+
+void CarWorld::zoom_in()
+{
+	FreeCam* cam = dynamic_cast<FreeCam*>(m_Camera);
+	if(cam)
+	{
+		cam->ZoomIn();
+	}
+}
+
+void CarWorld::zoom_out()
+{
+	FreeCam* cam = dynamic_cast<FreeCam*>(m_Camera);
+	if(cam)
+	{
+		cam->ZoomOut();
+	}
+}
+
+void CarWorld::remove( const CWFeature* AFeature )
+{
+	for(list<CWFeature*>::iterator it=m_Features.begin(); it!= m_Features.end();++it)
+	{
+		if(AFeature==(*it))
+		{
+			delete (*it);
+			m_Features.erase(it);
+			return;
+		}
+	}
+}
+
+
+void CarWorld::addKeyboardRecorder( const char* recorder_name,HWindow* hwindow )
+{
+	add(m_Recorders[recorder_name] = new KeyboardInputRecorder(hwindow));
+}
+
+void CarWorld::remove_all_collide_objects()
+{
+	list<CWFeature*>::iterator it = m_Features.begin();
+	for(;it!=m_Features.end();)
+	{
+		CWPointObject* pObject=dynamic_cast<CWPointObject*>(*it);
+		if(pObject)
+		{
+			it=m_Features.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}

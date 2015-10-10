@@ -40,8 +40,10 @@ string PathOf(const string &AString)
 		tmp = AString;
 	else
 		tmp = &AString[i];*/
+	if(i==-1)
+		return ".";
+	
 	tmp[i] = 0;
-
 	//cout << "PathOf \"" << AString << "\" is \"" << tmp << "\"\n";
 	return tmp;
 }
